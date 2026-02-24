@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
-import '../../../core/theme/app_colors.dart';
-import '../../../data/mock/mock_data.dart';
+import 'package:provider/provider.dart';
+import '../../../state/activity_provider.dart';
 import '../../../models/activity_model.dart';
+import '../../widgets/app_bottom_nav_bar.dart';
+import '../../widgets/add_activity_dialog.dart';
 
-/// Pantalla de Actividad
-/// Muestra las actividades del día, reuniones y notificaciones
+/// Activity Screen - Historial de actividades
+/// Muestra todas las actividades del usuario con filtros
 class ActivityScreen extends StatefulWidget {
   const ActivityScreen({super.key});
 
@@ -14,386 +15,257 @@ class ActivityScreen extends StatefulWidget {
 }
 
 class _ActivityScreenState extends State<ActivityScreen> {
-  int _selectedIndex = 1;
-  late List<ActivityModel> _activities;
-  late List<Map<String, dynamic>> _meetings;
-  late List<Map<String, dynamic>> _notifications;
-
-  @override
-  void initState() {
-    super.initState();
-    _activities = MockData.getMockActivities();
-    _meetings = MockData.getMockMeetings();
-    _notifications = MockData.getMockNotifications();
-  }
-
-  void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
-
-    switch (index) {
-      case 0:
-        context.go('/home');
-        break;
-      case 1:
-        // Ya estamos en Activity
-        break;
-      case 2:
-        context.go('/summary');
-        break;
-    }
-  }
-
-  Color _getActivityColor(ActivityType type) {
-    switch (type) {
-      case ActivityType.clockIn:
-        return AppColors.success;
-      case ActivityType.clockOut:
-        return AppColors.error;
-      case ActivityType.breakStart:
-      case ActivityType.breakEnd:
-        return AppColors.warning;
-      case ActivityType.meeting:
-        return AppColors.info;
-      case ActivityType.absence:
-        return AppColors.textSecondary;
-    }
-  }
-
-  IconData _getActivityIcon(ActivityType type) {
-    switch (type) {
-      case ActivityType.clockIn:
-        return Icons.login_rounded;
-      case ActivityType.clockOut:
-        return Icons.logout_rounded;
-      case ActivityType.breakStart:
-        return Icons.pause_circle_outline;
-      case ActivityType.breakEnd:
-        return Icons.play_circle_outline;
-      case ActivityType.meeting:
-        return Icons.groups_outlined;
-      case ActivityType.absence:
-        return Icons.event_busy_outlined;
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.backgroundPrimary,
       appBar: AppBar(
-        title: const Text('Tu Actividad'),
+        title: const Text('Actividad'),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.person_outline),
-            onPressed: () {
-              context.push('/profile');
+          // Botón de filtro
+          PopupMenuButton<ActivityType?>(
+            icon: const Icon(Icons.filter_list),
+            tooltip: 'Filtrar por tipo',
+            onSelected: (type) {
+              context.read<ActivityProvider>().setFilter(type);
             },
-          ),
-        ],
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // Sección de actividades del día
-            Text(
-              'Actividades de hoy',
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
-            const SizedBox(height: 12),
-            
-            if (_activities.isEmpty)
-              _buildEmptyState('No hay actividades registradas hoy')
-            else
-              ..._activities.map((activity) => _buildActivityCard(activity)),
-
-            const SizedBox(height: 24),
-
-            // Sección de reuniones
-            Text(
-              'Reuniones',
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
-            const SizedBox(height: 12),
-            
-            if (_meetings.isEmpty)
-              _buildEmptyState('No tienes reuniones programadas')
-            else
-              ..._meetings.map((meeting) => _buildMeetingCard(meeting)),
-
-            const SizedBox(height: 24),
-
-            // Sección de notificaciones
-            Text(
-              'Notificaciones',
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
-            const SizedBox(height: 12),
-            
-            if (_notifications.isEmpty)
-              _buildEmptyState('No tienes notificaciones nuevas')
-            else
-              ..._notifications.map((notification) => 
-                  _buildNotificationCard(notification)),
-          ],
-        ),
-      ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _selectedIndex,
-        onTap: _onItemTapped,
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home_outlined),
-            activeIcon: Icon(Icons.home),
-            label: 'Inicio',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.list_alt_outlined),
-            activeIcon: Icon(Icons.list_alt),
-            label: 'Actividad',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.bar_chart_outlined),
-            activeIcon: Icon(Icons.bar_chart),
-            label: 'Resumen',
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildEmptyState(String message) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 16),
-      decoration: BoxDecoration(
-        color: AppColors.backgroundCard,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Center(
-        child: Text(
-          message,
-          textAlign: TextAlign.center,
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            color: AppColors.textSecondary,
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildActivityCard(ActivityModel activity) {
-    final color = _getActivityColor(activity.type);
-    final icon = _getActivityIcon(activity.type);
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.backgroundCard,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              color: color.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(
-              icon,
-              color: color,
-              size: 24,
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  activity.description,
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  activity.formattedTime,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-                if (activity.location != null) ...[
-                  const SizedBox(height: 4),
-                  Row(
+            itemBuilder: (context) => [
+              const PopupMenuItem(
+                value: null,
+                child: Text('Todas'),
+              ),
+              ...ActivityType.values.map((type) {
+                return PopupMenuItem(
+                  value: type,
+                  child: Row(
                     children: [
-                      const Icon(
-                        Icons.location_on_outlined,
-                        size: 14,
-                        color: AppColors.iconSecondary,
+                      Icon(
+                        _getIconForType(type.iconName),
+                        size: 20,
+                        color: Color(type.colorValue),
                       ),
-                      const SizedBox(width: 4),
+                      const SizedBox(width: 12),
+                      Text(type.displayName),
+                    ],
+                  ),
+                );
+              }),
+            ],
+          ),
+        ],
+      ),
+      body: Consumer<ActivityProvider>(
+        builder: (context, activityProvider, child) {
+          // Estado de carga
+          if (activityProvider.isLoading) {
+            return const Center(
+              child: CircularProgressIndicator(),
+            );
+          }
+
+          final activities = activityProvider.filteredActivities;
+
+          // Sin actividades
+          if (activities.isEmpty) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.list_alt,
+                    size: 80,
+                    color: Theme.of(context).colorScheme.primary.withOpacity(0.5),
+                  ),
+                  const SizedBox(height: 20),
+                  Text(
+                    'No hay actividades',
+                    style: Theme.of(context).textTheme.headlineMedium,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    activityProvider.filterType != null
+                        ? 'No hay actividades de este tipo'
+                        : 'Comienza fichando tu entrada',
+                    style: Theme.of(context).textTheme.bodyMedium,
+                    textAlign: TextAlign.center,
+                  ),
+                  if (activityProvider.filterType != null) ...[
+                    const SizedBox(height: 16),
+                    ElevatedButton.icon(
+                      onPressed: () {
+                        activityProvider.clearFilter();
+                      },
+                      icon: const Icon(Icons.clear),
+                      label: const Text('Limpiar filtro'),
+                    ),
+                  ],
+                ],
+              ),
+            );
+          }
+
+          // Lista de actividades
+          return Column(
+            children: [
+              // Indicador de filtro activo
+              if (activityProvider.filterType != null)
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.filter_list,
+                        size: 20,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                      const SizedBox(width: 8),
                       Text(
-                        activity.location!,
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: AppColors.textSecondary,
+                        'Filtrado por: ${activityProvider.filterType!.displayName}',
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.primary,
+                          fontWeight: FontWeight.w600,
                         ),
+                      ),
+                      const Spacer(),
+                      TextButton(
+                        onPressed: () => activityProvider.clearFilter(),
+                        child: const Text('Limpiar'),
                       ),
                     ],
                   ),
-                ],
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMeetingCard(Map<String, dynamic> meeting) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.backgroundCard,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  color: AppColors.info.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Icon(
-                  Icons.groups_outlined,
-                  color: AppColors.info,
-                  size: 24,
-                ),
-              ),
-              const SizedBox(width: 16),
+              
+              // Lista
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      meeting['title'],
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      '${meeting['time']} • ${meeting['duration']}',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: AppColors.textSecondary,
+                child: ListView.builder(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: activities.length,
+                  itemBuilder: (context, index) {
+                    final activity = activities[index];
+                    final isToday = _isToday(activity.timestamp);
+                    
+                    return Card(
+                      margin: const EdgeInsets.only(bottom: 12),
+                      child: ListTile(
+                        contentPadding: const EdgeInsets.all(16),
+                        leading: CircleAvatar(
+                          backgroundColor: Color(activity.type.colorValue),
+                          child: Icon(
+                            _getIconForType(activity.type.iconName),
+                            color: Colors.white,
+                            size: 20,
+                          ),
+                        ),
+                        title: Text(
+                          activity.type.displayName,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        subtitle: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const SizedBox(height: 4),
+                            Text(activity.description),
+                            const SizedBox(height: 4),
+                            Row(
+                              children: [
+                                Icon(
+                                  Icons.access_time,
+                                  size: 14,
+                                  color: Theme.of(context).textTheme.bodySmall?.color,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  '${activity.formattedTime} • ${activity.formattedDate}',
+                                  style: Theme.of(context).textTheme.bodySmall,
+                                ),
+                              ],
+                            ),
+                            if (activity.location != null) ...[
+                              const SizedBox(height: 4),
+                              Row(
+                                children: [
+                                  Icon(
+                                    Icons.location_on,
+                                    size: 14,
+                                    color: Theme.of(context).textTheme.bodySmall?.color,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    activity.location!,
+                                    style: Theme.of(context).textTheme.bodySmall,
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ],
+                        ),
+                        trailing: isToday
+                            ? Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Theme.of(context).colorScheme.primary,
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: const Text(
+                                  'HOY',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              )
+                            : null,
                       ),
-                    ),
-                  ],
+                    );
+                  },
                 ),
               ),
             ],
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              const Icon(
-                Icons.location_on_outlined,
-                size: 16,
-                color: AppColors.iconSecondary,
-              ),
-              const SizedBox(width: 6),
-              Text(
-                meeting['location'],
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: AppColors.textSecondary,
-                ),
-              ),
-              const Spacer(),
-              const Icon(
-                Icons.people_outline,
-                size: 16,
-                color: AppColors.iconSecondary,
-              ),
-              const SizedBox(width: 6),
-              Text(
-                '${meeting['attendees']} personas',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: AppColors.textSecondary,
-                ),
-              ),
-            ],
-          ),
-        ],
+          );
+        },
       ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          showDialog(
+            context: context,
+            builder: (context) => const AddActivityDialog(),
+          );
+        },
+        child: const Icon(Icons.add),
+      ),
+      bottomNavigationBar: const AppBottomNavBar(currentIndex: 1),
     );
   }
 
-  Widget _buildNotificationCard(Map<String, dynamic> notification) {
-    final isUnread = !(notification['read'] as bool);
+  bool _isToday(DateTime date) {
+    final now = DateTime.now();
+    return date.year == now.year &&
+        date.month == now.month &&
+        date.day == now.day;
+  }
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: isUnread 
-            ? AppColors.primary.withOpacity(0.05)
-            : AppColors.backgroundCard,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: isUnread ? AppColors.primary.withOpacity(0.3) : AppColors.border,
-        ),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 8,
-            height: 8,
-            decoration: BoxDecoration(
-              color: isUnread ? AppColors.primary : Colors.transparent,
-              shape: BoxShape.circle,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  notification['title'],
-                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    fontWeight: isUnread ? FontWeight.w600 : FontWeight.w400,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  notification['message'],
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  notification['time'],
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: AppColors.textTertiary,
-                    fontSize: 11,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
+  IconData _getIconForType(String iconName) {
+    switch (iconName) {
+      case 'login':
+        return Icons.login;
+      case 'logout':
+        return Icons.logout;
+      case 'pause':
+        return Icons.pause;
+      case 'play':
+        return Icons.play_arrow;
+      case 'meeting':
+        return Icons.groups;
+      case 'cancel':
+        return Icons.cancel;
+      default:
+        return Icons.access_time;
+    }
   }
 }
