@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
-import 'package:fl_chart/fl_chart.dart';
-import '../../../core/theme/app_colors.dart';
-import '../../../data/mock/mock_data.dart';
-import '../../../models/summary_model.dart';
+import 'package:provider/provider.dart';
+import '../../../state/auth_provider.dart';
+import '../../../state/summary_provider.dart';
+import '../../widgets/app_bottom_nav_bar.dart';
 
-/// Pantalla de Resumen
-/// Muestra el resumen mensual de horas trabajadas con gráficas
+/// Summary Screen - Resumen mensual
+/// Muestra estadísticas y progreso del mes
 class SummaryScreen extends StatefulWidget {
   const SummaryScreen({super.key});
 
@@ -15,559 +14,293 @@ class SummaryScreen extends StatefulWidget {
 }
 
 class _SummaryScreenState extends State<SummaryScreen> {
-  int _selectedIndex = 2;
-  late SummaryModel _summary;
-
   @override
   void initState() {
     super.initState();
-    _summary = MockData.getMockMonthlySummary();
+    _loadData();
   }
 
-  void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
-
-    switch (index) {
-      case 0:
-        context.go('/home');
-        break;
-      case 1:
-        context.go('/activity');
-        break;
-      case 2:
-        // Ya estamos en Summary
-        break;
-    }
+  void _loadData() {
+    final authProvider = context.read<AuthProvider>();
+    final userId = authProvider.currentUser?.id ?? '1';
+    context.read<SummaryProvider>().loadCurrentSummary(userId);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.backgroundPrimary,
       appBar: AppBar(
-        title: const Text('Resumen'),
+        title: Consumer<SummaryProvider>(
+          builder: (context, summaryProvider, child) {
+            return Text(summaryProvider.selectedPeriod);
+          },
+        ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.person_outline),
+            icon: const Icon(Icons.today),
+            tooltip: 'Ir a mes actual',
             onPressed: () {
-              context.push('/profile');
+              final authProvider = context.read<AuthProvider>();
+              final userId = authProvider.currentUser?.id ?? '1';
+              context.read<SummaryProvider>().goToCurrentMonth(userId);
             },
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // Selector de mes
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              decoration: BoxDecoration(
-                color: AppColors.backgroundCard,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppColors.border),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.chevron_left),
-                    onPressed: () {
-                      // TODO: Cambiar mes anterior
-                    },
-                  ),
-                  Text(
-                    '${_summary.monthName} ${_summary.year}',
-                    style: Theme.of(context).textTheme.titleLarge,
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.chevron_right),
-                    onPressed: () {
-                      // TODO: Cambiar mes siguiente
-                    },
-                  ),
-                ],
-              ),
-            ),
+      body: Consumer2<AuthProvider, SummaryProvider>(
+        builder: (context, authProvider, summaryProvider, child) {
+          // Estado de carga
+          if (summaryProvider.isLoading) {
+            return const Center(
+              child: CircularProgressIndicator(),
+            );
+          }
 
-            const SizedBox(height: 24),
+          final summary = summaryProvider.currentSummary;
+          
+          // Sin datos
+          if (summary == null) {
+            return const Center(
+              child: Text('No hay datos disponibles'),
+            );
+          }
 
-            // Cards de resumen
-            Row(
+          final userId = authProvider.currentUser?.id ?? '1';
+
+          return SingleChildScrollView(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
-                  child: _buildSummaryCard(
-                    label: 'Horas trabajadas',
-                    value: '${_summary.totalHours.toStringAsFixed(1)}h',
-                    icon: Icons.schedule,
-                    color: AppColors.primary,
+                // Navegación de mes
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.chevron_left),
+                      onPressed: () {
+                        summaryProvider.goToPreviousMonth(userId);
+                      },
+                    ),
+                    Text(
+                      summaryProvider.selectedPeriod,
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.chevron_right),
+                      onPressed: () {
+                        summaryProvider.goToNextMonth(userId);
+                      },
+                    ),
+                  ],
+                ),
+                
+                const SizedBox(height: 24),
+                
+                // Estadísticas principales en grid
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildStatCard(
+                        context,
+                        'Horas trabajadas',
+                        '${summary.totalHours.toStringAsFixed(1)}h',
+                        Icons.access_time,
+                        Colors.blue,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _buildStatCard(
+                        context,
+                        'Horas esperadas',
+                        '${summary.expectedHours.toStringAsFixed(0)}h',
+                        Icons.schedule,
+                        Colors.grey,
+                      ),
+                    ),
+                  ],
+                ),
+                
+                const SizedBox(height: 12),
+                
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildStatCard(
+                        context,
+                        'Progreso',
+                        '${summary.completionPercentage.toStringAsFixed(1)}%',
+                        Icons.trending_up,
+                        summary.isComplete ? Colors.green : Colors.orange,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _buildStatCard(
+                        context,
+                        summary.extraHours >= 0 ? 'Horas extra' : 'Pendientes',
+                        '${summary.extraHours.abs().toStringAsFixed(1)}h',
+                        summary.extraHours >= 0 ? Icons.add_circle : Icons.remove_circle,
+                        summary.extraHours >= 0 ? Colors.green : Colors.red,
+                      ),
+                    ),
+                  ],
+                ),
+                
+                const SizedBox(height: 24),
+                
+                // Barra de progreso
+                Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'Progreso del mes',
+                              style: Theme.of(context).textTheme.titleLarge,
+                            ),
+                            Text(
+                              '${summary.completionPercentage.toStringAsFixed(0)}%',
+                              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                                color: Theme.of(context).colorScheme.primary,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        LinearProgressIndicator(
+                          value: summary.completionPercentage / 100,
+                          minHeight: 8,
+                          backgroundColor: Colors.grey.withOpacity(0.2),
+                        ),
+                        const SizedBox(height: 12),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              '${summary.totalHours.toStringAsFixed(1)}h',
+                              style: Theme.of(context).textTheme.bodySmall,
+                            ),
+                            Text(
+                              '${summary.expectedHours.toStringAsFixed(0)}h',
+                              style: Theme.of(context).textTheme.bodySmall,
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: _buildSummaryCard(
-                    label: 'Horas esperadas',
-                    value: '${_summary.expectedHours.toStringAsFixed(1)}h',
-                    icon: Icons.calendar_today,
-                    color: AppColors.textSecondary,
+                
+                const SizedBox(height: 24),
+                
+                // Promedio diario
+                Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.calendar_today,
+                          color: Theme.of(context).colorScheme.primary,
+                          size: 32,
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Promedio diario',
+                                style: Theme.of(context).textTheme.bodySmall,
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                '${summary.averageHoursPerDay.toStringAsFixed(1)}h por día',
+                                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ],
-            ),
-
-            const SizedBox(height: 12),
-
-            Row(
-              children: [
-                Expanded(
-                  child: _buildSummaryCard(
-                    label: 'Horas extra',
-                    value: '${_summary.extraHours.toStringAsFixed(1)}h',
-                    icon: Icons.trending_up,
-                    color: AppColors.success,
-                  ),
+                
+                const SizedBox(height: 16),
+                
+                Text(
+                  'Calendario del mes',
+                  style: Theme.of(context).textTheme.headlineSmall,
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: _buildSummaryCard(
-                    label: 'Horas pendientes',
-                    value: '${_summary.pendingHours.toStringAsFixed(1)}h',
-                    icon: Icons.trending_down,
-                    color: AppColors.warning,
-                  ),
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 24),
-
-            // Progreso
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: AppColors.backgroundCard,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppColors.border),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Progreso del mes',
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                  const SizedBox(height: 16),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: LinearProgressIndicator(
-                      value: _summary.expectedHours > 0 ? _summary.completionPercentage / 100 : 0.0,
-                      minHeight: 12,
-                      backgroundColor: AppColors.backgroundSecondary,
-                      valueColor: AlwaysStoppedAnimation<Color>(
-                        _summary.completionPercentage >= 100 && _summary.expectedHours > 0
-                            ? AppColors.success
-                            : AppColors.primary,
+                const SizedBox(height: 8),
+                
+                Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Center(
+                      child: Column(
+                        children: [
+                          Icon(
+                            Icons.calendar_month,
+                            size: 48,
+                            color: Theme.of(context).colorScheme.primary.withOpacity(0.5),
+                          ),
+                          const SizedBox(height: 16),
+                          const Text('🚧 Calendario visual próximamente 🚧'),
+                        ],
                       ),
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  Text(
-                    '${_summary.completionPercentage.toStringAsFixed(1)}% completado',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
+          );
+        },
+      ),
+      bottomNavigationBar: const AppBottomNavBar(currentIndex: 2),
+    );
+  }
 
-            const SizedBox(height: 24),
-
-            // Gráfica semanal
-            Text(
-              'Horas por semana',
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
+  Widget _buildStatCard(
+    BuildContext context,
+    String label,
+    String value,
+    IconData icon,
+    Color color,
+  ) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(icon, color: color, size: 28),
             const SizedBox(height: 12),
-            
-            Container(
-              height: 250,
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: AppColors.backgroundCard,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppColors.border),
-              ),
-              child: _summary.totalHours > 0 ? _buildWeeklyChart() : _buildEmptyChart(),
-            ),
-
-            const SizedBox(height: 24),
-
-            // Calendario mensual simplificado
             Text(
-              'Calendario del mes',
-              style: Theme.of(context).textTheme.titleLarge,
+              value,
+              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                color: color,
+                fontWeight: FontWeight.bold,
+              ),
             ),
-            const SizedBox(height: 12),
-            
-            _buildMonthCalendar(),
-
-            const SizedBox(height: 24),
-
-            // Resumen económico (placeholder)
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: AppColors.backgroundCard,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppColors.border),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Resumen económico',
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                  const SizedBox(height: 16),
-                  _buildEconomicRow('Salario base', '0,00 €'),
-                  const SizedBox(height: 8),
-                  _buildEconomicRow('Horas extra', '+ 0,00 €'),
-                  const SizedBox(height: 8),
-                  const Divider(),
-                  const SizedBox(height: 8),
-                  _buildEconomicRow(
-                    'Total estimado',
-                    '0,00 €',
-                    isBold: true,
-                  ),
-                ],
-              ),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: Theme.of(context).textTheme.bodySmall,
             ),
           ],
         ),
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _selectedIndex,
-        onTap: _onItemTapped,
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home_outlined),
-            activeIcon: Icon(Icons.home),
-            label: 'Inicio',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.list_alt_outlined),
-            activeIcon: Icon(Icons.list_alt),
-            label: 'Actividad',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.bar_chart_outlined),
-            activeIcon: Icon(Icons.bar_chart),
-            label: 'Resumen',
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSummaryCard({
-    required String label,
-    required String value,
-    required IconData icon,
-    required Color color,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.backgroundCard,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(
-            icon,
-            color: color,
-            size: 24,
-          ),
-          const SizedBox(height: 12),
-          Text(
-            label,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: AppColors.textSecondary,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            value,
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: color,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildEmptyChart() {
-    return const Center(
-      child: Text(
-        'No hay datos para mostrar en la gráfica',
-        style: TextStyle(color: AppColors.textSecondary),
-      ),
-    );
-  }
-
-  Widget _buildWeeklyChart() {
-    return BarChart(
-      BarChartData(
-        alignment: BarChartAlignment.spaceAround,
-        maxY: 50,
-        barTouchData: BarTouchData(enabled: false),
-        titlesData: FlTitlesData(
-          show: true,
-          bottomTitles: AxisTitles(
-            sideTitles: SideTitles(
-              showTitles: true,
-              getTitlesWidget: (value, meta) {
-                const weeks = ['S1', 'S2', 'S3', 'S4'];
-                if (value.toInt() >= 0 && value.toInt() < weeks.length) {
-                  return Text(
-                    weeks[value.toInt()],
-                    style: const TextStyle(
-                      color: AppColors.textSecondary,
-                      fontSize: 12,
-                    ),
-                  );
-                }
-                return const Text('');
-              },
-            ),
-          ),
-          leftTitles: AxisTitles(
-            sideTitles: SideTitles(
-              showTitles: true,
-              reservedSize: 40,
-              getTitlesWidget: (value, meta) {
-                return Text(
-                  '${value.toInt()}h',
-                  style: const TextStyle(
-                    color: AppColors.textSecondary,
-                    fontSize: 10,
-                  ),
-                );
-              },
-            ),
-          ),
-          topTitles: const AxisTitles(
-            sideTitles: SideTitles(showTitles: false),
-          ),
-          rightTitles: const AxisTitles(
-            sideTitles: SideTitles(showTitles: false),
-          ),
-        ),
-        gridData: FlGridData(
-          show: true,
-          drawVerticalLine: false,
-          horizontalInterval: 10,
-          getDrawingHorizontalLine: (value) {
-            return FlLine(
-              color: AppColors.border,
-              strokeWidth: 1,
-            );
-          },
-        ),
-        borderData: FlBorderData(show: false),
-        barGroups: [
-          BarChartGroupData(x: 0, barRods: [
-            BarChartRodData(
-              toY: 0,
-              color: AppColors.primary,
-              width: 16,
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
-            ),
-          ]),
-          BarChartGroupData(x: 1, barRods: [
-            BarChartRodData(
-              toY: 0,
-              color: AppColors.primary,
-              width: 16,
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
-            ),
-          ]),
-          BarChartGroupData(x: 2, barRods: [
-            BarChartRodData(
-              toY: 0,
-              color: AppColors.primary,
-              width: 16,
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
-            ),
-          ]),
-          BarChartGroupData(x: 3, barRods: [
-            BarChartRodData(
-              toY: 0,
-              color: AppColors.warning,
-              width: 16,
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
-            ),
-          ]),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMonthCalendar() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.backgroundCard,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Column(
-        children: [
-          // Días de la semana
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: ['L', 'M', 'X', 'J', 'V', 'S', 'D']
-                .map((day) => SizedBox(
-                      width: 32,
-                      child: Text(
-                        day,
-                        textAlign: TextAlign.center,
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: AppColors.textSecondary,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ))
-                .toList(),
-          ),
-          const SizedBox(height: 12),
-          
-          if (_summary.dailySummaries.isEmpty)
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 20),
-              child: Center(
-                child: Text(
-                  'No hay registros para este mes',
-                  style: TextStyle(color: AppColors.textSecondary),
-                ),
-              ),
-            )
-          else
-            Wrap(
-              spacing: 4,
-              runSpacing: 4,
-              children: List.generate(
-                _summary.dailySummaries.length,
-                (index) {
-                  final day = _summary.dailySummaries[index];
-                  Color color;
-                  
-                  switch (day.status) {
-                    case DayStatus.complete:
-                      color = AppColors.success;
-                      break;
-                    case DayStatus.incomplete:
-                      color = AppColors.warning;
-                      break;
-                    case DayStatus.absence:
-                      color = AppColors.textTertiary;
-                      break;
-                    case DayStatus.pending:
-                      color = AppColors.backgroundSecondary;
-                      break;
-                  }
-
-                  return Container(
-                    width: 32,
-                    height: 32,
-                    decoration: BoxDecoration(
-                      color: color.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(6),
-                      border: Border.all(
-                        color: color.withOpacity(0.5),
-                        width: 1,
-                      ),
-                    ),
-                    child: Center(
-                      child: Text(
-                        '${day.day}',
-                        style: TextStyle(
-                          color: color,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
-          const SizedBox(height: 16),
-          // Leyenda
-          Wrap(
-            spacing: 16,
-            runSpacing: 8,
-            children: [
-              _buildLegendItem('Completo', AppColors.success),
-              _buildLegendItem('Incompleto', AppColors.warning),
-              _buildLegendItem('Ausencia', AppColors.textTertiary),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildLegendItem(String label, Color color) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          width: 12,
-          height: 12,
-          decoration: BoxDecoration(
-            color: color,
-            borderRadius: BorderRadius.circular(3),
-          ),
-        ),
-        const SizedBox(width: 6),
-        Text(
-          label,
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-            color: AppColors.textSecondary,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildEconomicRow(String label, String value, {bool isBold = false}) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          label,
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            fontWeight: isBold ? FontWeight.w600 : FontWeight.w400,
-          ),
-        ),
-        Text(
-          value,
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            fontWeight: isBold ? FontWeight.w600 : FontWeight.w400,
-            color: isBold ? AppColors.primary : AppColors.textPrimary,
-          ),
-        ),
-      ],
     );
   }
 }
