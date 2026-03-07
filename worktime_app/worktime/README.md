@@ -238,15 +238,17 @@ cloud_firestore: ^5.5.1
 - [ ] Datos en tiempo real
 - [ ] Modo offline
 
-### 📋 Planificado
+## 🐛 Bugs Conocidos / Cosas a Arreglar
 
-- [ ] Notificaciones push
-- [ ] Exportación de reportes (PDF)
-- [ ] Calendario visual interactivo
-- [ ] Gráficas avanzadas con fl_chart
-- [ ] Solicitud de ausencias/vacaciones
-- [ ] Multi-idioma (i18n)
-- [ ] Testing unitario e integración
+Problemas identificados en la versión actual que necesitan corrección:
+
+### 🔴 Prioritarios
+
+- [ ] **Mantener sesión** — Al cerrar y volver a abrir la app, el usuario tiene que volver a iniciar sesión. Hay que implementar persistencia de sesión (SharedPreferences o Firebase Auth `authStateChanges`) para que si ya hay una sesión activa, se salte la pantalla de login directamente.
+
+- [ ] **Activity no funcional** — La pantalla de actividades no muestra ni registra datos correctamente. Hay que revisar el `ActivityProvider`, asegurarse de que los datos se cargan al iniciar la pantalla y que el CRUD funciona de extremo a extremo.
+
+- [ ] **Editar datos de usuario desde el perfil** — Actualmente el perfil solo muestra la información del usuario pero no permite modificarla. Hay que añadir la posibilidad de editar nombre, correo u otros campos directamente desde la pantalla de perfil, con guardado en Firestore o localmente según el estado de integración.
 
 ## 🛠️ Guía de Desarrollo
 
@@ -348,49 +350,6 @@ Editar archivos en `lib/core/theme/`:
 └───────────────────────────────────────────────┘
 ```
 
-## 🧪 Testing
-
-### Ejecutar Tests
-```bash
-# Tests unitarios
-flutter test
-
-# Tests de integración
-flutter test integration_test/
-
-# Coverage
-flutter test --coverage
-```
-
-## 🔧 Troubleshooting
-
-### Problemas comunes
-
-**Error de Gradle (Android)**:
-```bash
-flutter clean
-cd android
-./gradlew clean
-cd ..
-flutter pub get
-flutter run
-```
-
-**Error de dependencias**:
-```bash
-flutter pub cache repair
-flutter pub get
-```
-
-**Hot reload no funciona**:
-```bash
-# Reiniciar app
-r
-
-# Full restart
-R
-```
-
 ## 📄 Licencia
 
 Este proyecto es un desarrollo privado para WorkTime.
@@ -415,8 +374,3 @@ Para soporte técnico o consultas sobre el proyecto, contactar a través de los 
 - **Estado**: En desarrollo activo
 - **Plataformas soportadas**: Android, iOS, Web
 - **Plataforma principal**: Android
-- **Firebase**: Integración en progreso
-
----
-
-**Última actualización**: Febrero 2025
