@@ -2,201 +2,208 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../state/auth_provider.dart';
 import '../../state/activity_provider.dart';
+import '../../state/session_provider.dart';
 import '../../models/activity_model.dart';
 
 /// Botón inteligente de fichaje
-/// Detecta el estado actual y muestra la acción apropiada
+/// Detecta el estado y muestra la acción correcta
+/// Integrado con el contador de tiempo
 class ClockInButton extends StatelessWidget {
   const ClockInButton({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Consumer2<AuthProvider, ActivityProvider>(
-      builder: (context, authProvider, activityProvider, child) {
+    return Consumer3<AuthProvider, ActivityProvider, SessionProvider>(
+      builder: (context, authProvider, activityProvider, sessionProvider, child) {
         final lastActivity = activityProvider.lastActivity;
-        final userId = authProvider.currentUser?.id ?? '1';
-
-        final nextActivityType = _getNextActivityType(lastActivity);
-        final buttonInfo = _getButtonInfo(nextActivityType);
-
+        final isCounterRunning = sessionProvider.isRunning;
+        
+        // Determinar siguiente acción
+        final nextAction = _getNextAction(lastActivity, isCounterRunning);
+        
         return SizedBox(
           width: double.infinity,
           child: ElevatedButton.icon(
-            onPressed: activityProvider.isLoading
-                ? null
-                : () => _handleClockAction(
-                      context,
-                      userId,
-                      nextActivityType,
-                      activityProvider,
-                    ),
-            icon: Icon(buttonInfo.icon),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: buttonInfo.color,
-              padding: const EdgeInsets.symmetric(vertical: 16),
+            onPressed: () => _handleAction(
+              context,
+              authProvider,
+              activityProvider,
+              sessionProvider,
+              nextAction,
             ),
-            label: activityProvider.isLoading
-                ? const SizedBox(
-                    height: 20,
-                    width: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                    ),
-                  )
-                : Text(
-                    buttonInfo.label,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Color(nextAction.colorValue),
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            icon: Icon(nextAction.icon, size: 24),
+            label: Text(
+              nextAction.label,
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
           ),
         );
       },
     );
   }
 
-  ActivityType _getNextActivityType(ActivityModel? lastActivity) {
-    if (lastActivity == null) return ActivityType.clockIn;
-
+  ActionType _getNextAction(ActivityModel? lastActivity, bool isCounterRunning) {
+    // Si el contador está corriendo → Salida
+    if (isCounterRunning) {
+      return ActionType.clockOut;
+    }
+    
+    // Si no hay actividad → Entrada
+    if (lastActivity == null) {
+      return ActionType.clockIn;
+    }
+    
+    // Basarse en la última actividad
     switch (lastActivity.type) {
       case ActivityType.clockIn:
       case ActivityType.breakEnd:
-        return ActivityType.clockOut;
+        return ActionType.clockOut;
+      
       case ActivityType.clockOut:
       case ActivityType.absence:
-        return ActivityType.clockIn;
+        return ActionType.clockIn;
+      
       case ActivityType.breakStart:
-        return ActivityType.breakEnd;
-      case ActivityType.meeting:
-        return ActivityType.clockOut;
+        return ActionType.breakEnd;
+      
+      default:
+        return ActionType.clockIn;
     }
   }
 
-  _ButtonInfo _getButtonInfo(ActivityType type) {
-    switch (type) {
-      case ActivityType.clockIn:
-        return _ButtonInfo(
-          label: 'Fichar Entrada',
-          icon: Icons.login,
-          color: const Color(0xFF4CAF50),
-        );
-      case ActivityType.clockOut:
-        return _ButtonInfo(
-          label: 'Fichar Salida',
-          icon: Icons.logout,
-          color: const Color(0xFFFF5252),
-        );
-      case ActivityType.breakStart:
-        return _ButtonInfo(
-          label: 'Iniciar Pausa',
-          icon: Icons.pause_circle,
-          color: const Color(0xFFFFB300),
-        );
-      case ActivityType.breakEnd:
-        return _ButtonInfo(
-          label: 'Terminar Pausa',
-          icon: Icons.play_circle,
-          color: const Color(0xFF4DA3FF),
-        );
-      case ActivityType.meeting:
-        return _ButtonInfo(
-          label: 'Iniciar Reunión',
-          icon: Icons.groups,
-          color: const Color(0xFF42A5F5),
-        );
-      case ActivityType.absence:
-        return _ButtonInfo(
-          label: 'Marcar Ausencia',
-          icon: Icons.cancel,
-          color: const Color(0xFF7C7F85),
-        );
-    }
-  }
-
-  Future<void> _handleClockAction(
+  Future<void> _handleAction(
     BuildContext context,
-    String userId,
-    ActivityType type,
+    AuthProvider authProvider,
     ActivityProvider activityProvider,
+    SessionProvider sessionProvider,
+    ActionType action,
   ) async {
-    final newActivity = ActivityModel(
-      id: 'act_${DateTime.now().millisecondsSinceEpoch}',
-      userId: userId,
-      type: type,
-      timestamp: DateTime.now(),
-      description: _getDescription(type),
-      location: 'Oficina Central',
-    );
+    final userId = authProvider.currentUser?.id;
+    if (userId == null) return;
 
-    final success = await activityProvider.addActivity(newActivity);
+    try {
+      ActivityType activityType;
+      String description;
 
-    if (!context.mounted) return;
+      switch (action) {
+        case ActionType.clockIn:
+          // ENTRADA: Iniciar contador + Guardar actividad
+          activityType = ActivityType.clockIn;
+          description = 'Entrada registrada';
+          
+          // Iniciar contador
+          await sessionProvider.start();
+          break;
 
-    if (success) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Row(
-            children: [
-              Icon(_getButtonInfo(type).icon, color: Colors.white),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      type.displayName,
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    Text(
-                      _formatTime(DateTime.now()),
-                      style: const TextStyle(fontSize: 12),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          backgroundColor: _getButtonInfo(type).color,
-          behavior: SnackBarBehavior.floating,
-          duration: const Duration(seconds: 3),
-        ),
+        case ActionType.clockOut:
+          // SALIDA: Detener contador + Guardar actividad
+          activityType = ActivityType.clockOut;
+          description = 'Salida registrada';
+          
+          // Detener contador
+          await sessionProvider.stop();
+          break;
+
+        case ActionType.breakStart:
+          // PAUSA: Pausar contador temporalmente
+          activityType = ActivityType.breakStart;
+          description = 'Pausa iniciada';
+          // TODO: Implementar pausa del contador
+          break;
+
+        case ActionType.breakEnd:
+          // FIN PAUSA: Reanudar contador
+          activityType = ActivityType.breakEnd;
+          description = 'Pausa finalizada';
+          // TODO: Implementar reanudación del contador
+          break;
+      }
+
+      // Crear y guardar actividad
+      final activity = ActivityModel(
+        id: 'activity_${DateTime.now().millisecondsSinceEpoch}',
+        userId: userId,
+        type: activityType,
+        timestamp: DateTime.now(),
+        description: description,
       );
-    }
-  }
 
-  String _getDescription(ActivityType type) {
-    switch (type) {
-      case ActivityType.clockIn:
-        return 'Entrada al trabajo';
-      case ActivityType.clockOut:
-        return 'Salida del trabajo';
-      case ActivityType.breakStart:
-        return 'Inicio de pausa';
-      case ActivityType.breakEnd:
-        return 'Fin de pausa';
-      case ActivityType.meeting:
-        return 'Reunión';
-      case ActivityType.absence:
-        return 'Ausencia';
-    }
-  }
+      final success = await activityProvider.addActivity(activity);
 
-  String _formatTime(DateTime time) {
-    return '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
+      if (success && context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(description),
+            backgroundColor: Color(activityType.colorValue),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 }
 
-class _ButtonInfo {
-  final String label;
-  final IconData icon;
-  final Color color;
+/// Tipos de acciones disponibles
+enum ActionType {
+  clockIn,
+  clockOut,
+  breakStart,
+  breakEnd,
+}
 
-  _ButtonInfo({
-    required this.label,
-    required this.icon,
-    required this.color,
-  });
+extension ActionTypeExtension on ActionType {
+  String get label {
+    switch (this) {
+      case ActionType.clockIn:
+        return 'Fichar Entrada';
+      case ActionType.clockOut:
+        return 'Fichar Salida';
+      case ActionType.breakStart:
+        return 'Iniciar Pausa';
+      case ActionType.breakEnd:
+        return 'Finalizar Pausa';
+    }
+  }
+
+  IconData get icon {
+    switch (this) {
+      case ActionType.clockIn:
+        return Icons.login;
+      case ActionType.clockOut:
+        return Icons.logout;
+      case ActionType.breakStart:
+        return Icons.pause;
+      case ActionType.breakEnd:
+        return Icons.play_arrow;
+    }
+  }
+
+  int get colorValue {
+    switch (this) {
+      case ActionType.clockIn:
+        return 0xFF4CAF50; // Verde
+      case ActionType.clockOut:
+        return 0xFFFF5252; // Rojo
+      case ActionType.breakStart:
+        return 0xFFFFB300; // Amarillo
+      case ActionType.breakEnd:
+        return 0xFF4DA3FF; // Azul
+    }
+  }
 }

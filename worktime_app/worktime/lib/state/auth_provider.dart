@@ -1,164 +1,188 @@
 import 'package:flutter/foundation.dart';
 import '../models/user_model.dart';
+import '../services/auth_service.dart';
+import '../services/firestore_service.dart';
 
-/// Auth Provider
-/// Gestiona el estado de autenticación de la aplicación
-/// Maneja login, logout y el usuario actual
+/// Provider de autenticación con Firebase
 class AuthProvider extends ChangeNotifier {
-  // ============================================
-  // PROPIEDADES PRIVADAS
-  // ============================================
-  
+  final AuthService _authService = AuthService();
+  final FirestoreService _firestoreService = FirestoreService();
+
   UserModel? _currentUser;
   bool _isAuthenticated = false;
   bool _isLoading = false;
   String? _errorMessage;
 
-  // ============================================
-  // GETTERS PÚBLICOS
-  // ============================================
-  
-  /// Usuario actualmente autenticado (puede ser null)
   UserModel? get currentUser => _currentUser;
-  
-  /// ¿El usuario está autenticado?
   bool get isAuthenticated => _isAuthenticated;
-  
-  /// ¿Está cargando alguna operación?
   bool get isLoading => _isLoading;
-  
-  /// Mensaje de error (si existe)
   String? get errorMessage => _errorMessage;
-  
-  /// Obtener el nombre del usuario o "Usuario" por defecto
   String get userName => _currentUser?.name ?? 'Usuario';
 
-  // ============================================
-  // MÉTODOS DE AUTENTICACIÓN
-  // ============================================
+  AuthProvider() {
+    checkAuthStatus();
+  }
 
-  /// Iniciar sesión
-  /// Simula una llamada a API
+  /// Login con Firebase
   Future<bool> login(String email, String password) async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
     try {
-      // Indicar que está cargando
-      _isLoading = true;
-      _errorMessage = null;
-      notifyListeners();
+      final user = await _authService.login(email, password);
 
-      // Simular llamada a API (2 segundos)
-      await Future.delayed(const Duration(seconds: 2));
-
-      // Validación básica (en producción esto se hace en el backend)
-      if (email.isEmpty || password.isEmpty) {
-        _errorMessage = 'Por favor, completa todos los campos';
+      if (user != null) {
+        // Intentar cargar perfil completo desde Firestore
+        final fullProfile = await _firestoreService.getUserProfile(user.id);
+        
+        if (fullProfile != null) {
+          _currentUser = fullProfile;
+        } else {
+          // Si no existe perfil en Firestore, usar datos básicos y guardarlos
+          _currentUser = user;
+          await _firestoreService.saveUserProfile(user);
+        }
+        
+        _isAuthenticated = true;
+        _isLoading = false;
+        notifyListeners();
+        return true;
+      } else {
+        _errorMessage = 'Error al iniciar sesión';
         _isLoading = false;
         notifyListeners();
         return false;
       }
-
-      if (password.length < 6) {
-        _errorMessage = 'La contraseña debe tener al menos 6 caracteres';
-        _isLoading = false;
-        notifyListeners();
-        return false;
-      }
-
-      // Simular usuario autenticado
-      // En producción, esto vendría del backend
-      _currentUser = UserModel(
-        id: '1',
-        name: 'Juan Pérez',
-        email: email,
-        position: 'Desarrollador Flutter',
-        age: 28,
-        phone: '+34 600 123 456',
-        department: 'Tecnología',
-        startDate: DateTime(2023, 1, 15),
-      );
-
-      _isAuthenticated = true;
-      _isLoading = false;
-      
-      // Notificar a todos los widgets que escuchan
-      notifyListeners();
-      
-      return true;
     } catch (e) {
-      // Manejar errores
-      _errorMessage = 'Error al iniciar sesión: ${e.toString()}';
+      _errorMessage = e.toString();
       _isLoading = false;
+      _isAuthenticated = false;
       notifyListeners();
       return false;
     }
   }
 
-  /// Cerrar sesión
-  Future<void> logout() async {
+  /// Registro de nuevo usuario
+  Future<bool> register(String email, String password, String name) async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
     try {
-      _isLoading = true;
+      final user = await _authService.register(email, password, name);
+
+      if (user != null) {
+        _currentUser = user;
+        _isAuthenticated = true;
+        
+        // Guardar perfil en Firestore
+        await _firestoreService.saveUserProfile(user);
+        
+        _isLoading = false;
+        notifyListeners();
+        return true;
+      } else {
+        _errorMessage = 'Error al registrar usuario';
+        _isLoading = false;
+        notifyListeners();
+        return false;
+      }
+    } catch (e) {
+      _errorMessage = e.toString();
+      _isLoading = false;
+      _isAuthenticated = false;
       notifyListeners();
+      return false;
+    }
+  }
 
-      // Simular llamada a API
-      await Future.delayed(const Duration(milliseconds: 500));
+  /// Logout
+  Future<void> logout() async {
+    _isLoading = true;
+    notifyListeners();
 
-      // Limpiar datos del usuario
+    try {
+      await _authService.logout();
       _currentUser = null;
       _isAuthenticated = false;
       _errorMessage = null;
       _isLoading = false;
-
       notifyListeners();
     } catch (e) {
-      _errorMessage = 'Error al cerrar sesión: ${e.toString()}';
+      _errorMessage = e.toString();
       _isLoading = false;
       notifyListeners();
     }
   }
 
-  /// Verificar si hay una sesión activa
-  /// Útil para auto-login al abrir la app
+  /// Verificar si hay sesión activa
   Future<void> checkAuthStatus() async {
+    _isLoading = true;
+    notifyListeners();
+
     try {
-      _isLoading = true;
-      notifyListeners();
+      final user = await _authService.checkCurrentUser();
 
-      // Simular verificación de token guardado
-      await Future.delayed(const Duration(seconds: 1));
+      if (user != null) {
+        // Intentar cargar perfil completo desde Firestore
+        final fullProfile = await _firestoreService.getUserProfile(user.id);
+        
+        if (fullProfile != null) {
+          _currentUser = fullProfile;
+        } else {
+          _currentUser = user;
+          await _firestoreService.saveUserProfile(user);
+        }
+        
+        _isAuthenticated = true;
+      } else {
+        _currentUser = null;
+        _isAuthenticated = false;
+      }
 
-      // Por ahora, siempre retorna no autenticado
-      // En producción, aquí verificarías un token guardado
-      _isAuthenticated = false;
-      _currentUser = null;
       _isLoading = false;
-
       notifyListeners();
     } catch (e) {
-      _errorMessage = 'Error al verificar sesión: ${e.toString()}';
+      _currentUser = null;
+      _isAuthenticated = false;
       _isLoading = false;
       notifyListeners();
     }
   }
 
-  /// Actualizar información del usuario
-  void updateUser(UserModel updatedUser) {
-    _currentUser = updatedUser;
-    notifyListeners();
+  /// Actualizar datos del usuario
+  Future<void> updateUser(UserModel user) async {
+    try {
+      await _firestoreService.saveUserProfile(user);
+      _currentUser = user;
+      notifyListeners();
+    } catch (e) {
+      _errorMessage = e.toString();
+      notifyListeners();
+    }
   }
 
-  /// Limpiar mensaje de error
   void clearError() {
     _errorMessage = null;
     notifyListeners();
   }
 
-  /// Debug: Imprimir estado actual
-  void debugPrintState() {
-    debugPrint('=== AUTH STATE ===');
-    debugPrint('isAuthenticated: $_isAuthenticated');
-    debugPrint('currentUser: ${_currentUser?.name ?? "null"}');
-    debugPrint('isLoading: $_isLoading');
-    debugPrint('errorMessage: $_errorMessage');
-    debugPrint('==================');
+  Future<bool> resetPassword(String email) async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      await _authService.resetPassword(email);
+      _isLoading = false;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _errorMessage = e.toString();
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
   }
 }

@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../state/auth_provider.dart';
 import '../../../state/activity_provider.dart';
+import '../../../state/session_provider.dart';
 import '../../../models/activity_model.dart';
 import '../../widgets/app_bottom_nav_bar.dart';
 import '../../widgets/clock_in_button.dart';
 import '../../widgets/add_activity_dialog.dart';
 
 /// Home Screen - Pantalla principal / Dashboard
-/// Muestra el estado actual, botón de fichaje y resumen del día
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -26,7 +26,9 @@ class _HomeScreenState extends State<HomeScreen> {
   void _loadData() {
     final authProvider = context.read<AuthProvider>();
     final userId = authProvider.currentUser?.id ?? '1';
+    
     context.read<ActivityProvider>().loadActivities(userId);
+    context.read<SessionProvider>().initSession(userId);
   }
 
   @override
@@ -41,11 +43,12 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
-      body: Consumer2<AuthProvider, ActivityProvider>(
-        builder: (context, authProvider, activityProvider, child) {
+      body: Consumer3<AuthProvider, ActivityProvider, SessionProvider>(
+        builder: (context, authProvider, activityProvider, sessionProvider, child) {
           final userName = authProvider.userName;
           final todayActivities = activityProvider.todayActivities;
           final lastActivity = activityProvider.lastActivity;
+          final isWorking = sessionProvider.isRunning;
 
           return SingleChildScrollView(
             padding: const EdgeInsets.all(16),
@@ -66,31 +69,53 @@ class _HomeScreenState extends State<HomeScreen> {
                 
                 const SizedBox(height: 32),
                 
+                // CARD PRINCIPAL: Estado + Contador + Botón
                 Card(
                   child: Padding(
                     padding: const EdgeInsets.all(24),
                     child: Column(
                       children: [
+                        // Icono de estado
                         Container(
                           padding: const EdgeInsets.all(20),
                           decoration: BoxDecoration(
-                            color: _getStatusColor(lastActivity).withOpacity(0.1),
+                            color: _getStatusColor(lastActivity, isWorking).withOpacity(0.1),
                             shape: BoxShape.circle,
                           ),
                           child: Icon(
-                            _getStatusIcon(lastActivity),
+                            _getStatusIcon(lastActivity, isWorking),
                             size: 48,
-                            color: _getStatusColor(lastActivity),
+                            color: _getStatusColor(lastActivity, isWorking),
                           ),
                         ),
                         const SizedBox(height: 16),
                         
+                        // Estado actual
                         Text(
-                          _getStatusText(lastActivity),
+                          _getStatusText(lastActivity, isWorking),
                           style: Theme.of(context).textTheme.headlineMedium,
                         ),
                         
-                        if (lastActivity != null) ...[
+                        const SizedBox(height: 24),
+                        
+                        // CONTADOR DE TIEMPO
+                        if (isWorking) ...[
+                          Text(
+                            'Tiempo trabajado',
+                            style: Theme.of(context).textTheme.titleMedium,
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            sessionProvider.formattedTime,
+                            style: Theme.of(context).textTheme.displayLarge?.copyWith(
+                              fontSize: 56,
+                              fontWeight: FontWeight.bold,
+                              color: Theme.of(context).colorScheme.primary,
+                              letterSpacing: 2,
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+                        ] else if (lastActivity != null) ...[
                           const SizedBox(height: 8),
                           Text(
                             'Última actividad: ${lastActivity.formattedTime}',
@@ -103,9 +128,12 @@ class _HomeScreenState extends State<HomeScreen> {
                               color: Color(lastActivity.type.colorValue),
                             ),
                           ),
+                          const SizedBox(height: 24),
+                        ] else ...[
+                          const SizedBox(height: 24),
                         ],
                         
-                        const SizedBox(height: 24),
+                        // Botón de fichaje
                         const ClockInButton(),
                       ],
                     ),
@@ -272,7 +300,8 @@ class _HomeScreenState extends State<HomeScreen> {
     return '${days[now.weekday - 1]}, ${now.day} de ${months[now.month - 1]}';
   }
 
-  IconData _getStatusIcon(ActivityModel? lastActivity) {
+  IconData _getStatusIcon(ActivityModel? lastActivity, bool isWorking) {
+    if (isWorking) return Icons.work;
     if (lastActivity == null) return Icons.login;
     
     switch (lastActivity.type) {
@@ -288,7 +317,8 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  Color _getStatusColor(ActivityModel? lastActivity) {
+  Color _getStatusColor(ActivityModel? lastActivity, bool isWorking) {
+    if (isWorking) return const Color(0xFF4CAF50);
     if (lastActivity == null) return const Color(0xFF4CAF50);
     
     switch (lastActivity.type) {
@@ -304,7 +334,8 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  String _getStatusText(ActivityModel? lastActivity) {
+  String _getStatusText(ActivityModel? lastActivity, bool isWorking) {
+    if (isWorking) return 'Trabajando ahora';
     if (lastActivity == null) return 'Listo para fichar';
     
     switch (lastActivity.type) {
