@@ -23,6 +23,13 @@ class AuthProvider extends ChangeNotifier {
     checkAuthStatus();
   }
 
+  /// Establecer usuario manualmente (usado en Splash para persistencia)
+  void setUser(UserModel user) {
+    _currentUser = user;
+    _isAuthenticated = true;
+    notifyListeners();
+  }
+
   /// Login con Firebase
   Future<bool> login(String email, String password) async {
     _isLoading = true;

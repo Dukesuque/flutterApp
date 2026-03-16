@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../state/auth_provider.dart';
+import '../../../services/auth_service.dart';
 
 /// Pantalla de Splash
 /// Muestra el logo y nombre de la aplicación con animación
+/// Verifica si hay sesión activa para redirigir automáticamente
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
 
@@ -16,6 +20,7 @@ class _SplashScreenState extends State<SplashScreen>
   late AnimationController _controller;
   late Animation<double> _fadeAnimation;
   late Animation<double> _scaleAnimation;
+  final AuthService _authService = AuthService(); // Instancia de AuthService
 
   @override
   void initState() {
@@ -44,12 +49,32 @@ class _SplashScreenState extends State<SplashScreen>
     // Iniciar animación
     _controller.forward();
 
-    // Navegar a login después de 2 segundos
-    Future.delayed(const Duration(seconds: 2), () {
-      if (mounted) {
-        context.go('/login');
-      }
-    });
+    // Verificar sesión y navegar
+    _checkAuthAndNavigate();
+  }
+
+  /// Verifica si hay usuario logueado y navega a la pantalla correspondiente
+  Future<void> _checkAuthAndNavigate() async {
+    await Future.delayed(const Duration(seconds: 2));
+    
+    if (!mounted) return;
+
+    // Verificar si hay usuario logueado
+    final user = await _authService.checkCurrentUser();
+    
+    if (!mounted) return;
+
+    if (user != null) {
+      // Usuario logueado - cargar su información en el provider
+      final authProvider = context.read<AuthProvider>();
+      authProvider.setUser(user);
+      
+      // Navegar a Home
+      context.go('/home');
+    } else {
+      // Sin usuario - ir a Login
+      context.go('/login');
+    }
   }
 
   @override
@@ -73,7 +98,7 @@ class _SplashScreenState extends State<SplashScreen>
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    // Logo (placeholder - usar icono por ahora)
+                    // Logo
                     Container(
                       width: 120,
                       height: 120,

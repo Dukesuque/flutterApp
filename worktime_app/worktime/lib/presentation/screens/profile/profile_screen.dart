@@ -15,18 +15,6 @@ class ProfileScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Perfil'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.edit),
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Editar perfil - Próximamente'),
-                ),
-              );
-            },
-          ),
-        ],
       ),
       body: Consumer<AuthProvider>(
         builder: (context, authProvider, child) {
@@ -123,63 +111,20 @@ class ProfileScreen extends StatelessWidget {
                 
                 const SizedBox(height: 16),
                 
-                // Opciones del perfil
+                // ========== CRÉDITOS ========== 
                 ListTile(
-                  leading: const Icon(Icons.person_outline),
-                  title: const Text('Información Personal'),
+                  leading: Icon(
+                    Icons.code,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                  title: const Text('Créditos'),
+                  subtitle: const Text('Información del desarrollador'),
                   trailing: const Icon(Icons.chevron_right),
-                  onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Próximamente'),
-                      ),
-                    );
-                  },
+                  onTap: () => _showCreditsDialog(context),
                 ),
                 const Divider(),
                 
-                ListTile(
-                  leading: const Icon(Icons.notifications_outlined),
-                  title: const Text('Notificaciones'),
-                  trailing: const Icon(Icons.chevron_right),
-                  onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Próximamente'),
-                      ),
-                    );
-                  },
-                ),
-                const Divider(),
-                
-                ListTile(
-                  leading: const Icon(Icons.settings_outlined),
-                  title: const Text('Configuración'),
-                  trailing: const Icon(Icons.chevron_right),
-                  onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Próximamente'),
-                      ),
-                    );
-                  },
-                ),
-                const Divider(),
-                
-                ListTile(
-                  leading: const Icon(Icons.help_outline),
-                  title: const Text('Ayuda y Soporte'),
-                  trailing: const Icon(Icons.chevron_right),
-                  onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Próximamente'),
-                      ),
-                    );
-                  },
-                ),
-                const Divider(),
-                
+                // ========== ACERCA DE ==========
                 ListTile(
                   leading: const Icon(Icons.info_outline),
                   title: const Text('Acerca de'),
@@ -298,7 +243,7 @@ class ProfileScreen extends StatelessWidget {
     showAboutDialog(
       context: context,
       applicationName: 'WorkTime',
-      applicationVersion: '1.0.0',
+      applicationVersion: '1.0.0 Alpha',
       applicationIcon: Container(
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
@@ -314,8 +259,179 @@ class ProfileScreen extends StatelessWidget {
       children: const [
         Text('Aplicación de gestión de fichaje laboral.'),
         SizedBox(height: 8),
-        Text('Desarrollado con Flutter y Provider.'),
+        Text('Versión alfa en desarrollo.'),
       ],
+    );
+  }
+
+  /// Dialog de créditos del desarrollador
+  void _showCreditsDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Row(
+          children: [
+            Icon(
+              Icons.code,
+              color: Theme.of(context).colorScheme.primary,
+            ),
+            const SizedBox(width: 12),
+            const Text('Créditos'),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Desarrollador
+            Row(
+              children: [
+                Icon(
+                  Icons.person,
+                  color: Theme.of(context).colorScheme.primary,
+                  size: 20,
+                ),
+                const SizedBox(width: 8),
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Desarrollador',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey,
+                        ),
+                      ),
+                      Text(
+                        '[Tu Nombre]', // CAMBIA ESTO POR TU NOMBRE
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            
+            const SizedBox(height: 16),
+            const Divider(),
+            const SizedBox(height: 16),
+            
+            // Tecnologías
+            Row(
+              children: [
+                Icon(
+                  Icons.build,
+                  color: Theme.of(context).colorScheme.primary,
+                  size: 20,
+                ),
+                const SizedBox(width: 8),
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Tecnologías',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey,
+                        ),
+                      ),
+                      Text(
+                        'Flutter • Firebase • Provider',
+                        style: TextStyle(
+                          fontSize: 14,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            
+            const SizedBox(height: 16),
+            const Divider(),
+            const SizedBox(height: 16),
+            
+            // Versión
+            Row(
+              children: [
+                Icon(
+                  Icons.tag,
+                  color: Theme.of(context).colorScheme.primary,
+                  size: 20,
+                ),
+                const SizedBox(width: 8),
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Versión',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey,
+                        ),
+                      ),
+                      Text(
+                        '1.0.0 Alpha',
+                        style: TextStyle(
+                          fontSize: 14,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            
+            const SizedBox(height: 16),
+            const Divider(),
+            const SizedBox(height: 16),
+            
+            // Año
+            Row(
+              children: [
+                Icon(
+                  Icons.calendar_today,
+                  color: Theme.of(context).colorScheme.primary,
+                  size: 20,
+                ),
+                const SizedBox(width: 8),
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Año',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey,
+                        ),
+                      ),
+                      Text(
+                        '2025',
+                        style: TextStyle(
+                          fontSize: 14,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Cerrar'),
+          ),
+        ],
+      ),
     );
   }
 }
