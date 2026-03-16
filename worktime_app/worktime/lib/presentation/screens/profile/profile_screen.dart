@@ -304,7 +304,7 @@ class ProfileScreen extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        '[Tu Nombre]', // CAMBIA ESTO POR TU NOMBRE
+                        'DAVID ROLLAN ARIAS', 
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 16,
@@ -377,7 +377,7 @@ class ProfileScreen extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        '1.0.0 Alpha',
+                        '1.4.2 Alpha',
                         style: TextStyle(
                           fontSize: 14,
                         ),
