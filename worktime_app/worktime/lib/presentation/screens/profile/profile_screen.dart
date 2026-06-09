@@ -4,28 +4,45 @@ import 'package:go_router/go_router.dart';
 import '../../../state/auth_provider.dart';
 import '../../../core/routes/app_routes.dart';
 import '../../widgets/app_bottom_nav_bar.dart';
+import 'edit_profile_screen.dart';
 
-/// Profile Screen - Perfil de usuario
-/// Muestra información del usuario y opciones de configuración
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
 
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Perfil'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.edit_outlined),
+            tooltip: 'Editar perfil',
+            onPressed: () async {
+              await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const EditProfileScreen(),
+                ),
+              );
+            },
+          ),
+        ],
       ),
       body: Consumer<AuthProvider>(
         builder: (context, authProvider, child) {
           final user = authProvider.currentUser;
-          
+
           return SingleChildScrollView(
             child: Column(
               children: [
                 const SizedBox(height: 32),
-                
-                // Avatar y datos principales
+
                 CircleAvatar(
                   radius: 60,
                   backgroundColor: Theme.of(context).colorScheme.primary,
@@ -39,79 +56,70 @@ class ProfileScreen extends StatelessWidget {
                   ),
                 ),
                 
-                const SizedBox(height: 16),
-                
-                Text(
-                  user?.name ?? 'Usuario',
-                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                
-                const SizedBox(height: 8),
-                
-                Text(
-                  user?.email ?? 'email@ejemplo.com',
-                  style: Theme.of(context).textTheme.bodyLarge,
-                ),
-                
-                if (user?.position != null) ...[
-                  const SizedBox(height: 4),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      user!.position,
-                      style: TextStyle(
-                        color: Theme.of(context).colorScheme.primary,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ],
-                
-                const SizedBox(height: 32),
-                
-                // Información adicional
-                if (user?.department != null || user?.startDate != null)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Card(
-                      child: Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Column(
-                          children: [
-                            if (user!.department != null)
-                              _buildInfoRow(
-                                context,
-                                Icons.business,
-                                'Departamento',
-                                user.department!,
-                              ),
-                            if (user.department != null && user.startDate != null)
-                              const Divider(height: 24),
-                            if (user.startDate != null)
-                              _buildInfoRow(
-                                context,
-                                Icons.calendar_today,
-                                'Fecha de inicio',
-                                _formatDate(user.startDate!),
-                              ),
+                const SizedBox(height: 20),
+
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        children: [
+                          _buildInfoRow(
+                            context,
+                            Icons.person_outlined,
+                            'Nombre',
+                            user?.name ?? 'Usuario',
+                          ),
+                          const Divider(height: 24),
+                          _buildInfoRow(
+                            context,
+                            Icons.email_outlined,
+                            'Email',
+                            user?.email ?? '',
+                          ),
+                          const Divider(height: 24),
+                          _buildInfoRow(
+                            context,
+                            Icons.work_outlined,
+                            'Cargo',
+                            user?.position ?? 'Empleado',
+                          ),
+                          if (user?.department != null) ...[
+                            const Divider(height: 24),
+                            _buildInfoRow(
+                              context,
+                              Icons.business_outlined,
+                              'Departamento',
+                              user!.department!,
+                            ),
                           ],
-                        ),
+                          if (user?.phone != null) ...[
+                            const Divider(height: 24),
+                            _buildInfoRow(
+                              context,
+                              Icons.phone_outlined,
+                              'Teléfono',
+                              user!.phone!,
+                            ),
+                          ],
+                          if (user?.startDate != null) ...[
+                            const Divider(height: 24),
+                            _buildInfoRow(
+                              context,
+                              Icons.calendar_today_outlined,
+                              'En la empresa desde',
+                              _formatDate(user!.startDate!),
+                            ),
+                          ],
+                        ],
                       ),
                     ),
                   ),
-                
+                ),
+
                 const SizedBox(height: 16),
                 
-                // ========== CRÉDITOS ========== 
                 ListTile(
                   leading: Icon(
                     Icons.code,
@@ -124,7 +132,6 @@ class ProfileScreen extends StatelessWidget {
                 ),
                 const Divider(),
                 
-                // ========== ACERCA DE ==========
                 ListTile(
                   leading: const Icon(Icons.info_outline),
                   title: const Text('Acerca de'),
@@ -136,7 +143,6 @@ class ProfileScreen extends StatelessWidget {
                 
                 const SizedBox(height: 32),
                 
-                // Botón de cerrar sesión
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: SizedBox(
@@ -247,7 +253,7 @@ class ProfileScreen extends StatelessWidget {
       applicationIcon: Container(
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+          color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
           shape: BoxShape.circle,
         ),
         child: Icon(
@@ -264,7 +270,6 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  /// Dialog de créditos del desarrollador
   void _showCreditsDialog(BuildContext context) {
     showDialog(
       context: context,

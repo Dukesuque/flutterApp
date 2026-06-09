@@ -5,8 +5,6 @@ import '../../../state/summary_provider.dart';
 import '../../../models/summary_model.dart';
 import '../../widgets/app_bottom_nav_bar.dart';
 
-/// Summary Screen - Resumen mensual mejorado
-/// Muestra estadísticas y calendario visual del mes
 class SummaryScreen extends StatefulWidget {
   const SummaryScreen({super.key});
 
@@ -46,7 +44,6 @@ class _SummaryScreenState extends State<SummaryScreen> {
       ),
       body: Consumer2<AuthProvider, SummaryProvider>(
         builder: (context, authProvider, summaryProvider, child) {
-          // Estado de carga
           if (summaryProvider.isLoading) {
             return const Center(
               child: CircularProgressIndicator(),
@@ -55,7 +52,6 @@ class _SummaryScreenState extends State<SummaryScreen> {
 
           final summary = summaryProvider.currentSummary;
           
-          // Sin datos
           if (summary == null) {
             return Center(
               child: Column(
@@ -64,7 +60,7 @@ class _SummaryScreenState extends State<SummaryScreen> {
                   Icon(
                     Icons.calendar_today_outlined,
                     size: 80,
-                    color: Colors.grey.withOpacity(0.5),
+                    color: Colors.grey.withValues(alpha: 0.5),
                   ),
                   const SizedBox(height: 16),
                   const Text(
@@ -88,22 +84,12 @@ class _SummaryScreenState extends State<SummaryScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // ========== NAVEGACIÓN DE MES ==========
                 _buildMonthNavigation(context, summaryProvider, userId),
-                
                 const SizedBox(height: 24),
-                
-                // ========== ESTADÍSTICAS PRINCIPALES ==========
                 _buildMainStats(context, summary),
-                
                 const SizedBox(height: 24),
-                
-                // ========== BARRA DE PROGRESO ==========
                 _buildProgressCard(context, summary),
-                
                 const SizedBox(height: 24),
-                
-                // ========== CALENDARIO VISUAL ==========
                 _buildCalendar(context, summary),
                 
                 const SizedBox(height: 16),
@@ -116,7 +102,6 @@ class _SummaryScreenState extends State<SummaryScreen> {
     );
   }
 
-  /// Navegación de mes (flechas + nombre del mes)
   Widget _buildMonthNavigation(
     BuildContext context,
     SummaryProvider summaryProvider,
@@ -148,7 +133,6 @@ class _SummaryScreenState extends State<SummaryScreen> {
     );
   }
 
-  /// Estadísticas principales en grid 2x2
   Widget _buildMainStats(BuildContext context, SummaryModel summary) {
     return Column(
       children: [
@@ -203,7 +187,6 @@ class _SummaryScreenState extends State<SummaryScreen> {
     );
   }
 
-  /// Card individual de estadística
   Widget _buildStatCard(
     BuildContext context,
     String label,
@@ -239,7 +222,6 @@ class _SummaryScreenState extends State<SummaryScreen> {
     );
   }
 
-  /// Card con barra de progreso del mes
   Widget _buildProgressCard(BuildContext context, SummaryModel summary) {
     return Card(
       child: Padding(
@@ -271,7 +253,7 @@ class _SummaryScreenState extends State<SummaryScreen> {
               child: LinearProgressIndicator(
                 value: (summary.completionPercentage / 100).clamp(0.0, 1.0),
                 minHeight: 10,
-                backgroundColor: Colors.grey.withOpacity(0.2),
+                backgroundColor: Colors.grey.withValues(alpha: 0.2),
                 valueColor: AlwaysStoppedAnimation<Color>(
                   summary.isComplete ? Colors.green : Colors.orange,
                 ),
@@ -297,7 +279,6 @@ class _SummaryScreenState extends State<SummaryScreen> {
     );
   }
 
-  /// Calendario visual del mes
   Widget _buildCalendar(BuildContext context, SummaryModel summary) {
     return Card(
       child: Padding(
@@ -313,7 +294,6 @@ class _SummaryScreenState extends State<SummaryScreen> {
             ),
             const SizedBox(height: 16),
             
-            // Headers de días de la semana
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: ['L', 'M', 'X', 'J', 'V', 'S', 'D']
@@ -334,12 +314,8 @@ class _SummaryScreenState extends State<SummaryScreen> {
             
             const SizedBox(height: 8),
             
-            // Días del mes
             _buildCalendarDays(context, summary),
-            
             const SizedBox(height: 16),
-            
-            // Leyenda
             _buildLegend(context),
           ],
         ),
@@ -347,24 +323,18 @@ class _SummaryScreenState extends State<SummaryScreen> {
     );
   }
 
-  /// Días del calendario organizados en semanas
   Widget _buildCalendarDays(BuildContext context, SummaryModel summary) {
     final firstDay = DateTime(summary.year, summary.month, 1);
     final lastDay = DateTime(summary.year, summary.month + 1, 0);
     final daysInMonth = lastDay.day;
     
-    // Calcular offset inicial (1 = lunes, 7 = domingo)
     int startOffset = firstDay.weekday - 1;
-    
-    // Crear lista de widgets para los días
     List<Widget> dayWidgets = [];
-    
-    // Añadir espacios vacíos antes del primer día
+
     for (int i = 0; i < startOffset; i++) {
       dayWidgets.add(const SizedBox(width: 40, height: 40));
     }
     
-    // Añadir los días del mes
     for (int day = 1; day <= daysInMonth; day++) {
       final dailySummary = summary.dailySummaries.firstWhere(
         (ds) => ds.day == day,
@@ -378,18 +348,21 @@ class _SummaryScreenState extends State<SummaryScreen> {
       dayWidgets.add(_buildDayCell(context, day, dailySummary));
     }
     
-    // Organizar en filas de 7 días
     List<Widget> rows = [];
     for (int i = 0; i < dayWidgets.length; i += 7) {
+      final rowItems = dayWidgets.sublist(
+        i,
+        (i + 7 < dayWidgets.length) ? i + 7 : dayWidgets.length,
+      );
+      while (rowItems.length < 7) {
+        rowItems.add(const SizedBox(width: 40, height: 40));
+      }
       rows.add(
         Padding(
           padding: const EdgeInsets.symmetric(vertical: 4),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: dayWidgets.sublist(
-              i,
-              (i + 7 < dayWidgets.length) ? i + 7 : dayWidgets.length,
-            ),
+            children: rowItems,
           ),
         ),
       );
@@ -398,26 +371,25 @@ class _SummaryScreenState extends State<SummaryScreen> {
     return Column(children: rows);
   }
 
-  /// Celda individual de día en el calendario
   Widget _buildDayCell(BuildContext context, int day, DailySummary dailySummary) {
     Color backgroundColor;
     Color textColor;
     
     switch (dailySummary.status) {
       case DayStatus.complete:
-        backgroundColor = Colors.green.withOpacity(0.2);
+        backgroundColor = Colors.green.withValues(alpha: 0.2);
         textColor = Colors.green;
         break;
       case DayStatus.incomplete:
-        backgroundColor = Colors.orange.withOpacity(0.2);
+        backgroundColor = Colors.orange.withValues(alpha: 0.2);
         textColor = Colors.orange;
         break;
       case DayStatus.absence:
-        backgroundColor = Colors.red.withOpacity(0.2);
+        backgroundColor = Colors.red.withValues(alpha: 0.2);
         textColor = Colors.red;
         break;
       case DayStatus.pending:
-        backgroundColor = Colors.grey.withOpacity(0.1);
+        backgroundColor = Colors.grey.withValues(alpha: 0.1);
         textColor = Colors.grey;
         break;
     }
@@ -455,7 +427,6 @@ class _SummaryScreenState extends State<SummaryScreen> {
     );
   }
 
-  /// Leyenda de colores del calendario
   Widget _buildLegend(BuildContext context) {
     return Wrap(
       spacing: 16,
@@ -468,7 +439,6 @@ class _SummaryScreenState extends State<SummaryScreen> {
     );
   }
 
-  /// Item individual de la leyenda
   Widget _buildLegendItem(BuildContext context, Color color, String label) {
     return Row(
       mainAxisSize: MainAxisSize.min,
@@ -477,7 +447,7 @@ class _SummaryScreenState extends State<SummaryScreen> {
           width: 12,
           height: 12,
           decoration: BoxDecoration(
-            color: color.withOpacity(0.3),
+            color: color.withValues(alpha: 0.3),
             borderRadius: BorderRadius.circular(3),
           ),
         ),

@@ -1,9 +1,9 @@
 import 'package:flutter/foundation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../models/user_model.dart';
 import '../services/auth_service.dart';
 import '../services/firestore_service.dart';
 
-/// Provider de autenticación con Firebase
 class AuthProvider extends ChangeNotifier {
   final AuthService _authService = AuthService();
   final FirestoreService _firestoreService = FirestoreService();
@@ -23,15 +23,13 @@ class AuthProvider extends ChangeNotifier {
     checkAuthStatus();
   }
 
-  /// Establecer usuario manualmente (usado en Splash para persistencia)
   void setUser(UserModel user) {
     _currentUser = user;
     _isAuthenticated = true;
     notifyListeners();
   }
 
-  /// Login con Firebase
-  Future<bool> login(String email, String password) async {
+  Future<bool> login(String email, String password, {bool rememberMe = true}) async {
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
@@ -40,17 +38,13 @@ class AuthProvider extends ChangeNotifier {
       final user = await _authService.login(email, password);
 
       if (user != null) {
-        // Intentar cargar perfil completo desde Firestore
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setBool('rememberMe', rememberMe);
+
         final fullProfile = await _firestoreService.getUserProfile(user.id);
-        
-        if (fullProfile != null) {
-          _currentUser = fullProfile;
-        } else {
-          // Si no existe perfil en Firestore, usar datos básicos y guardarlos
-          _currentUser = user;
-          await _firestoreService.saveUserProfile(user);
-        }
-        
+        _currentUser = fullProfile ?? user;
+        if (fullProfile == null) await _firestoreService.saveUserProfile(user);
+
         _isAuthenticated = true;
         _isLoading = false;
         notifyListeners();
@@ -70,7 +64,6 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
-  /// Registro de nuevo usuario
   Future<bool> register(String email, String password, String name) async {
     _isLoading = true;
     _errorMessage = null;
@@ -82,10 +75,7 @@ class AuthProvider extends ChangeNotifier {
       if (user != null) {
         _currentUser = user;
         _isAuthenticated = true;
-        
-        // Guardar perfil en Firestore
         await _firestoreService.saveUserProfile(user);
-        
         _isLoading = false;
         notifyListeners();
         return true;
@@ -104,7 +94,6 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
-  /// Logout
   Future<void> logout() async {
     _isLoading = true;
     notifyListeners();
@@ -123,26 +112,25 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
-  /// Verificar si hay sesión activa
   Future<void> checkAuthStatus() async {
     _isLoading = true;
     notifyListeners();
 
     try {
+      final prefs = await SharedPreferences.getInstance();
+      final rememberMe = prefs.getBool('rememberMe') ?? true;
+
       final user = await _authService.checkCurrentUser();
 
-      if (user != null) {
-        // Intentar cargar perfil completo desde Firestore
+      if (user != null && rememberMe) {
         final fullProfile = await _firestoreService.getUserProfile(user.id);
-        
-        if (fullProfile != null) {
-          _currentUser = fullProfile;
-        } else {
-          _currentUser = user;
-          await _firestoreService.saveUserProfile(user);
-        }
-        
+        _currentUser = fullProfile ?? user;
+        if (fullProfile == null) await _firestoreService.saveUserProfile(user);
         _isAuthenticated = true;
+      } else if (user != null && !rememberMe) {
+        await _authService.logout();
+        _currentUser = null;
+        _isAuthenticated = false;
       } else {
         _currentUser = null;
         _isAuthenticated = false;
@@ -158,7 +146,11 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
-  /// Actualizar datos del usuario
+  Future<bool> getRememberMe() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool('rememberMe') ?? true;
+  }
+
   Future<void> updateUser(UserModel user) async {
     try {
       await _firestoreService.saveUserProfile(user);
@@ -168,11 +160,6 @@ class AuthProvider extends ChangeNotifier {
       _errorMessage = e.toString();
       notifyListeners();
     }
-  }
-
-  void clearError() {
-    _errorMessage = null;
-    notifyListeners();
   }
 
   Future<bool> resetPassword(String email) async {
@@ -191,5 +178,10 @@ class AuthProvider extends ChangeNotifier {
       notifyListeners();
       return false;
     }
+  }
+
+  void clearError() {
+    _errorMessage = null;
+    notifyListeners();
   }
 }

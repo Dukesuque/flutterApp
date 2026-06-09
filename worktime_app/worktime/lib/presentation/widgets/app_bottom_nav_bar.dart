@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/routes/app_routes.dart';
 
-/// Bottom Navigation Bar reutilizable
-/// Se usa en las 4 pantallas principales para mantener navegación consistente
 class AppBottomNavBar extends StatelessWidget {
   final int currentIndex;
 
@@ -44,7 +42,6 @@ class AppBottomNavBar extends StatelessWidget {
   }
 
   void _onItemTapped(BuildContext context, int index) {
-    // No navegar si ya estamos en esa pantalla
     if (index == currentIndex) return;
 
     switch (index) {

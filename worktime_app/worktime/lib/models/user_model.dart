@@ -1,5 +1,3 @@
-/// Modelo de Usuario
-/// Representa los datos de un usuario de la aplicación
 class UserModel {
   final String id;
   final String name;
@@ -23,7 +21,6 @@ class UserModel {
     this.startDate,
   });
 
-  /// Crear desde JSON
   factory UserModel.fromJson(Map<String, dynamic> json) {
     return UserModel(
       id: json['id'] as String,
@@ -34,13 +31,12 @@ class UserModel {
       avatarUrl: json['avatarUrl'] as String?,
       phone: json['phone'] as String?,
       department: json['department'] as String?,
-      startDate: json['startDate'] != null 
+      startDate: json['startDate'] != null
           ? DateTime.parse(json['startDate'] as String)
           : null,
     );
   }
 
-  /// Convertir a JSON
   Map<String, dynamic> toJson() {
     return {
       'id': id,
@@ -55,7 +51,6 @@ class UserModel {
     };
   }
 
-  /// Copiar con modificaciones
   UserModel copyWith({
     String? id,
     String? name,

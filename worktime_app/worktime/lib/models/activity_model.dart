@@ -1,5 +1,3 @@
-/// Modelo de Actividad
-/// Representa una actividad o evento en el sistema de fichaje
 class ActivityModel {
   final String id;
   final String userId;
@@ -19,7 +17,6 @@ class ActivityModel {
     this.notes,
   });
 
-  /// Crear desde JSON
   factory ActivityModel.fromJson(Map<String, dynamic> json) {
     return ActivityModel(
       id: json['id'] as String,
@@ -35,7 +32,6 @@ class ActivityModel {
     );
   }
 
-  /// Convertir a JSON
   Map<String, dynamic> toJson() {
     return {
       'id': id,
@@ -48,7 +44,6 @@ class ActivityModel {
     };
   }
 
-  /// Copiar con modificaciones
   ActivityModel copyWith({
     String? id,
     String? userId,
@@ -69,18 +64,15 @@ class ActivityModel {
     );
   }
 
-  /// Obtener hora formateada
   String get formattedTime {
     return '${timestamp.hour.toString().padLeft(2, '0')}:${timestamp.minute.toString().padLeft(2, '0')}';
   }
 
-  /// Obtener fecha formateada
   String get formattedDate {
     return '${timestamp.day.toString().padLeft(2, '0')}/${timestamp.month.toString().padLeft(2, '0')}/${timestamp.year}';
   }
 }
 
-/// Tipos de actividad
 enum ActivityType {
   clockIn,
   clockOut,
@@ -90,7 +82,6 @@ enum ActivityType {
   absence,
 }
 
-/// Extensión para obtener información de tipo de actividad
 extension ActivityTypeExtension on ActivityType {
   String get displayName {
     switch (this) {
@@ -126,21 +117,20 @@ extension ActivityTypeExtension on ActivityType {
     }
   }
 
-  /// Color asociado al tipo de actividad
   int get colorValue {
     switch (this) {
       case ActivityType.clockIn:
-        return 0xFF4CAF50;  // Verde (success)
+        return 0xFF4CAF50;
       case ActivityType.clockOut:
-        return 0xFFFF5252;  // Rojo (error)
+        return 0xFFFF5252;
       case ActivityType.breakStart:
-        return 0xFFFFB300;  // Amarillo (warning)
+        return 0xFFFFB300;
       case ActivityType.breakEnd:
-        return 0xFF4DA3FF;  // Azul (primary)
+        return 0xFF4DA3FF;
       case ActivityType.meeting:
-        return 0xFF42A5F5;  // Azul claro (info)
+        return 0xFF42A5F5;
       case ActivityType.absence:
-        return 0xFF7C7F85;  // Gris (textTertiary)
+        return 0xFF7C7F85;
     }
   }
 }

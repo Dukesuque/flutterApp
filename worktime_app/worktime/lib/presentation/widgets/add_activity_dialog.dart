@@ -4,7 +4,6 @@ import '../../state/auth_provider.dart';
 import '../../state/activity_provider.dart';
 import '../../models/activity_model.dart';
 
-/// Diálogo para añadir una actividad manualmente
 class AddActivityDialog extends StatefulWidget {
   const AddActivityDialog({super.key});
 
@@ -47,7 +46,6 @@ class _AddActivityDialogState extends State<AddActivityDialog> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Título
                 Row(
                   children: [
                     Icon(
@@ -65,7 +63,6 @@ class _AddActivityDialogState extends State<AddActivityDialog> {
                 
                 const SizedBox(height: 24),
                 
-                // Selector de tipo
                 Text(
                   'Tipo de actividad',
                   style: Theme.of(context).textTheme.titleMedium,
@@ -88,7 +85,7 @@ class _AddActivityDialogState extends State<AddActivityDialog> {
                           });
                         }
                       },
-                      selectedColor: Color(type.colorValue).withOpacity(0.3),
+                      selectedColor: Color(type.colorValue).withValues(alpha: 0.3),
                       avatar: isSelected
                           ? Icon(
                               _getIconForType(type),
@@ -102,7 +99,6 @@ class _AddActivityDialogState extends State<AddActivityDialog> {
                 
                 const SizedBox(height: 24),
                 
-                // Fecha y hora
                 Text(
                   'Fecha y hora',
                   style: Theme.of(context).textTheme.titleMedium,
@@ -131,7 +127,6 @@ class _AddActivityDialogState extends State<AddActivityDialog> {
                 
                 const SizedBox(height: 24),
                 
-                // Descripción
                 TextField(
                   controller: _descriptionController,
                   decoration: const InputDecoration(
@@ -144,7 +139,6 @@ class _AddActivityDialogState extends State<AddActivityDialog> {
                 
                 const SizedBox(height: 16),
                 
-                // Ubicación
                 TextField(
                   controller: _locationController,
                   decoration: const InputDecoration(
@@ -157,7 +151,6 @@ class _AddActivityDialogState extends State<AddActivityDialog> {
                 
                 const SizedBox(height: 16),
                 
-                // Notas
                 TextField(
                   controller: _notesController,
                   decoration: const InputDecoration(
@@ -171,7 +164,6 @@ class _AddActivityDialogState extends State<AddActivityDialog> {
                 
                 const SizedBox(height: 24),
                 
-                // Botones
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [

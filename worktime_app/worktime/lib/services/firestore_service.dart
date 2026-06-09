@@ -2,13 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/user_model.dart';
 import '../models/activity_model.dart';
 
-/// Servicio de Firestore para gestión de datos en la nube
 class FirestoreService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-
-  // ============================================
-  // GESTIÓN DE USUARIOS
-  // ============================================
 
   Future<void> saveUserProfile(UserModel user) async {
     try {
@@ -40,10 +35,6 @@ class FirestoreService {
       throw 'Error al cargar perfil: $e';
     }
   }
-
-  // ============================================
-  // GESTIÓN DE ACTIVIDADES
-  // ============================================
 
   Future<void> saveActivity(String userId, ActivityModel activity) async {
     try {
@@ -88,10 +79,6 @@ class FirestoreService {
     }
   }
 
-  // ============================================
-  // GESTIÓN DE SESIONES (CONTADOR)
-  // ============================================
-
   Future<void> saveActiveSession({
     required String userId,
     required String sessionId,
@@ -107,9 +94,36 @@ class FirestoreService {
         'sessionId': sessionId,
         'startTime': Timestamp.fromDate(startTime),
         'isActive': true,
+        'isPaused': false,
+        'elapsedSeconds': 0,
       });
     } catch (e) {
       throw 'Error al guardar sesión: $e';
+    }
+  }
+
+  Future<void> updateActiveSessionPause(
+    String userId, {
+    required bool isPaused,
+    required int elapsedSeconds,
+    DateTime? adjustedStartTime,
+  }) async {
+    try {
+      final updates = <String, dynamic>{
+        'isPaused': isPaused,
+        'elapsedSeconds': elapsedSeconds,
+      };
+      if (adjustedStartTime != null) {
+        updates['startTime'] = Timestamp.fromDate(adjustedStartTime);
+      }
+      await _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('sessions')
+          .doc('active')
+          .update(updates);
+    } catch (e) {
+      throw 'Error al actualizar pausa: $e';
     }
   }
 
@@ -169,6 +183,8 @@ class FirestoreService {
           'sessionId': data['sessionId'] as String,
           'startTime': (data['startTime'] as Timestamp).toDate(),
           'isActive': data['isActive'] as bool,
+          'isPaused': data['isPaused'] as bool? ?? false,
+          'elapsedSeconds': data['elapsedSeconds'] as int? ?? 0,
         };
       }
       return null;

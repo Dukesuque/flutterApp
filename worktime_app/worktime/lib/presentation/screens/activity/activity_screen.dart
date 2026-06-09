@@ -5,8 +5,6 @@ import '../../../models/activity_model.dart';
 import '../../widgets/app_bottom_nav_bar.dart';
 import '../../widgets/add_activity_dialog.dart';
 
-/// Activity Screen - Historial de actividades
-/// Muestra todas las actividades del usuario con filtros
 class ActivityScreen extends StatefulWidget {
   const ActivityScreen({super.key});
 
@@ -55,7 +53,6 @@ class _ActivityScreenState extends State<ActivityScreen> {
       ),
       body: Consumer<ActivityProvider>(
         builder: (context, activityProvider, child) {
-          // Estado de carga
           if (activityProvider.isLoading) {
             return const Center(
               child: CircularProgressIndicator(),
@@ -64,7 +61,6 @@ class _ActivityScreenState extends State<ActivityScreen> {
 
           final activities = activityProvider.filteredActivities;
 
-          // Sin actividades
           if (activities.isEmpty) {
             return Center(
               child: Column(
@@ -73,7 +69,7 @@ class _ActivityScreenState extends State<ActivityScreen> {
                   Icon(
                     Icons.list_alt,
                     size: 80,
-                    color: Theme.of(context).colorScheme.primary.withOpacity(0.5),
+                    color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.5),
                   ),
                   const SizedBox(height: 20),
                   Text(
@@ -103,14 +99,12 @@ class _ActivityScreenState extends State<ActivityScreen> {
             );
           }
 
-          // Lista de actividades
           return Column(
             children: [
-              // Indicador de filtro activo
               if (activityProvider.filterType != null)
                 Container(
                   padding: const EdgeInsets.all(12),
-                  color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                  color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
                   child: Row(
                     children: [
                       Icon(
@@ -135,7 +129,6 @@ class _ActivityScreenState extends State<ActivityScreen> {
                   ),
                 ),
               
-              // Lista
               Expanded(
                 child: ListView.builder(
                   padding: const EdgeInsets.all(16),

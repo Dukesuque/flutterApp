@@ -3,11 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../state/auth_provider.dart';
-import '../../../services/auth_service.dart';
 
-/// Pantalla de Splash
-/// Muestra el logo y nombre de la aplicación con animación
-/// Verifica si hay sesión activa para redirigir automáticamente
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
 
@@ -15,18 +11,16 @@ class SplashScreen extends StatefulWidget {
   State<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> 
+class _SplashScreenState extends State<SplashScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _fadeAnimation;
   late Animation<double> _scaleAnimation;
-  final AuthService _authService = AuthService(); // Instancia de AuthService
 
   @override
   void initState() {
     super.initState();
-    
-    // Configurar animaciones
+
     _controller = AnimationController(
       duration: const Duration(milliseconds: 1500),
       vsync: this,
@@ -46,33 +40,26 @@ class _SplashScreenState extends State<SplashScreen>
       ),
     );
 
-    // Iniciar animación
     _controller.forward();
-
-    // Verificar sesión y navegar
     _checkAuthAndNavigate();
   }
 
-  /// Verifica si hay usuario logueado y navega a la pantalla correspondiente
   Future<void> _checkAuthAndNavigate() async {
     await Future.delayed(const Duration(seconds: 2));
-    
+
     if (!mounted) return;
 
-    // Verificar si hay usuario logueado
-    final user = await _authService.checkCurrentUser();
-    
-    if (!mounted) return;
+    final authProvider = context.read<AuthProvider>();
 
-    if (user != null) {
-      // Usuario logueado - cargar su información en el provider
-      final authProvider = context.read<AuthProvider>();
-      authProvider.setUser(user);
-      
-      // Navegar a Home
+    // Si AuthProvider aún está cargando, esperar a que termine
+    while (authProvider.isLoading) {
+      await Future.delayed(const Duration(milliseconds: 100));
+      if (!mounted) return;
+    }
+
+    if (authProvider.isAuthenticated) {
       context.go('/home');
     } else {
-      // Sin usuario - ir a Login
       context.go('/login');
     }
   }

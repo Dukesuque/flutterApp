@@ -5,9 +5,6 @@ import '../../state/activity_provider.dart';
 import '../../state/session_provider.dart';
 import '../../models/activity_model.dart';
 
-/// Botón inteligente de fichaje
-/// Detecta el estado y muestra la acción correcta
-/// Integrado con el contador de tiempo
 class ClockInButton extends StatelessWidget {
   const ClockInButton({super.key});
 
@@ -16,63 +13,84 @@ class ClockInButton extends StatelessWidget {
     return Consumer3<AuthProvider, ActivityProvider, SessionProvider>(
       builder: (context, authProvider, activityProvider, sessionProvider, child) {
         final lastActivity = activityProvider.lastActivity;
-        final isCounterRunning = sessionProvider.isRunning;
-        
-        // Determinar siguiente acción
-        final nextAction = _getNextAction(lastActivity, isCounterRunning);
-        
-        return SizedBox(
-          width: double.infinity,
-          child: ElevatedButton.icon(
-            onPressed: () => _handleAction(
-              context,
-              authProvider,
-              activityProvider,
-              sessionProvider,
-              nextAction,
-            ),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Color(nextAction.colorValue),
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+        final isRunning = sessionProvider.isRunning;
+        final isPaused = sessionProvider.isPaused;
+
+        final nextAction = _getNextAction(lastActivity, isRunning, isPaused);
+
+        return Column(
+          children: [
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () => _handleAction(
+                  context,
+                  authProvider,
+                  activityProvider,
+                  sessionProvider,
+                  nextAction,
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Color(nextAction.colorValue),
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                icon: Icon(nextAction.icon, size: 24),
+                label: Text(
+                  nextAction.label,
+                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
               ),
             ),
-            icon: Icon(nextAction.icon, size: 24),
-            label: Text(
-              nextAction.label,
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-          ),
+            if (isRunning && !isPaused) ...[
+              const SizedBox(height: 8),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: () => _handlePause(
+                    context,
+                    authProvider,
+                    activityProvider,
+                    sessionProvider,
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xFFFFB300),
+                    side: const BorderSide(color: Color(0xFFFFB300)),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  icon: const Icon(Icons.pause, size: 20),
+                  label: const Text(
+                    'Iniciar Pausa',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                  ),
+                ),
+              ),
+            ],
+          ],
         );
       },
     );
   }
 
-  ActionType _getNextAction(ActivityModel? lastActivity, bool isCounterRunning) {
-    // Si el contador está corriendo → Salida
-    if (isCounterRunning) {
-      return ActionType.clockOut;
-    }
-    
-    // Si no hay actividad → Entrada
-    if (lastActivity == null) {
-      return ActionType.clockIn;
-    }
-    
-    // Basarse en la última actividad
+  ActionType _getNextAction(ActivityModel? lastActivity, bool isRunning, bool isPaused) {
+    if (isPaused) return ActionType.breakEnd;
+    if (isRunning) return ActionType.clockOut;
+    if (lastActivity == null) return ActionType.clockIn;
+
     switch (lastActivity.type) {
       case ActivityType.clockIn:
       case ActivityType.breakEnd:
         return ActionType.clockOut;
-      
       case ActivityType.clockOut:
       case ActivityType.absence:
         return ActionType.clockIn;
-      
       case ActivityType.breakStart:
         return ActionType.breakEnd;
-      
       default:
         return ActionType.clockIn;
     }
@@ -94,36 +112,25 @@ class ClockInButton extends StatelessWidget {
 
       switch (action) {
         case ActionType.clockIn:
-          // ENTRADA: Iniciar contador + Guardar actividad
           activityType = ActivityType.clockIn;
           description = 'Entrada registrada';
-          
-          // Iniciar contador
           await sessionProvider.start();
           break;
 
         case ActionType.clockOut:
-          // SALIDA: Detener contador + Guardar actividad
           activityType = ActivityType.clockOut;
           description = 'Salida registrada';
-          
-          // Detener contador
           await sessionProvider.stop();
           break;
 
-        case ActionType.breakStart:
-          // PAUSA: Pausar contador temporalmente
-          activityType = ActivityType.breakStart;
-          description = 'Pausa iniciada';
-          // TODO: Implementar pausa del contador
-          break;
-
         case ActionType.breakEnd:
-          // FIN PAUSA: Reanudar contador
           activityType = ActivityType.breakEnd;
           description = 'Pausa finalizada';
-          // TODO: Implementar reanudación del contador
+          await sessionProvider.resume();
           break;
+
+        default:
+          return;
       }
 
       // Crear y guardar actividad
@@ -157,9 +164,51 @@ class ClockInButton extends StatelessWidget {
       }
     }
   }
+
+  Future<void> _handlePause(
+    BuildContext context,
+    AuthProvider authProvider,
+    ActivityProvider activityProvider,
+    SessionProvider sessionProvider,
+  ) async {
+    final userId = authProvider.currentUser?.id;
+    if (userId == null) return;
+
+    try {
+      await sessionProvider.pause();
+
+      final activity = ActivityModel(
+        id: 'activity_${DateTime.now().millisecondsSinceEpoch}',
+        userId: userId,
+        type: ActivityType.breakStart,
+        timestamp: DateTime.now(),
+        description: 'Pausa iniciada',
+      );
+
+      await activityProvider.addActivity(activity);
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Pausa iniciada'),
+            backgroundColor: Color(0xFFFFB300),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
 }
 
-/// Tipos de acciones disponibles
 enum ActionType {
   clockIn,
   clockOut,

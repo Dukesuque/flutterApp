@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import '../../../core/routes/app_routes.dart';
 import '../../../state/auth_provider.dart';
 import '../../../state/activity_provider.dart';
 import '../../../state/session_provider.dart';
@@ -8,7 +10,6 @@ import '../../widgets/app_bottom_nav_bar.dart';
 import '../../widgets/clock_in_button.dart';
 import '../../widgets/add_activity_dialog.dart';
 
-/// Home Screen - Pantalla principal / Dashboard
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -36,12 +37,6 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('WorkTime'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.notifications_outlined),
-            onPressed: () {},
-          ),
-        ],
       ),
       body: Consumer3<AuthProvider, ActivityProvider, SessionProvider>(
         builder: (context, authProvider, activityProvider, sessionProvider, child) {
@@ -69,17 +64,15 @@ class _HomeScreenState extends State<HomeScreen> {
                 
                 const SizedBox(height: 32),
                 
-                // CARD PRINCIPAL: Estado + Contador + Botón
                 Card(
                   child: Padding(
                     padding: const EdgeInsets.all(24),
                     child: Column(
                       children: [
-                        // Icono de estado
                         Container(
                           padding: const EdgeInsets.all(20),
                           decoration: BoxDecoration(
-                            color: _getStatusColor(lastActivity, isWorking).withOpacity(0.1),
+                            color: _getStatusColor(lastActivity, isWorking).withValues(alpha: 0.1),
                             shape: BoxShape.circle,
                           ),
                           child: Icon(
@@ -90,7 +83,6 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                         const SizedBox(height: 16),
                         
-                        // Estado actual
                         Text(
                           _getStatusText(lastActivity, isWorking),
                           style: Theme.of(context).textTheme.headlineMedium,
@@ -98,7 +90,6 @@ class _HomeScreenState extends State<HomeScreen> {
                         
                         const SizedBox(height: 24),
                         
-                        // CONTADOR DE TIEMPO
                         if (isWorking) ...[
                           Text(
                             'Tiempo trabajado',
@@ -133,7 +124,6 @@ class _HomeScreenState extends State<HomeScreen> {
                           const SizedBox(height: 24),
                         ],
                         
-                        // Botón de fichaje
                         const ClockInButton(),
                       ],
                     ),
@@ -214,7 +204,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       margin: const EdgeInsets.only(bottom: 8),
                       child: ListTile(
                         leading: CircleAvatar(
-                          backgroundColor: Color(activity.type.colorValue).withOpacity(0.2),
+                          backgroundColor: Color(activity.type.colorValue).withValues(alpha: 0.2),
                           child: Icon(
                             _getIconForType(activity.type.iconName),
                             color: Color(activity.type.colorValue),
@@ -239,29 +229,11 @@ class _HomeScreenState extends State<HomeScreen> {
                   style: Theme.of(context).textTheme.headlineSmall,
                 ),
                 const SizedBox(height: 16),
-                
                 _buildActionButton(
                   context,
                   'Ver Historial Completo',
                   Icons.history,
-                  () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Ve a la pestaña "Actividad" para ver todo'),
-                      ),
-                    );
-                  },
-                ),
-                const SizedBox(height: 12),
-                _buildActionButton(
-                  context,
-                  'Solicitar Ausencia',
-                  Icons.event_busy,
-                  () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Próximamente')),
-                    );
-                  },
+                  () => context.go(AppRoutes.activity),
                 ),
               ],
             ),

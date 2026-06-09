@@ -1,66 +1,53 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import '../models/user_model.dart';
 
-/// Servicio de autenticación con Firebase
-/// Maneja login, logout, registro y verificación de sesión
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  /// Usuario actual de Firebase
   User? get currentUser => _auth.currentUser;
-
-  /// Stream de cambios de autenticación
   Stream<User?> get authStateChanges => _auth.authStateChanges();
 
-  /// Login con email y contraseña
-  /// Retorna UserModel si el login es exitoso, null si falla
   Future<UserModel?> login(String email, String password) async {
     try {
-      // Intentar login con Firebase
       final UserCredential credential = await _auth.signInWithEmailAndPassword(
         email: email,
         password: password,
       );
 
-      // Si el login es exitoso, crear UserModel
       if (credential.user != null) {
         return UserModel(
           id: credential.user!.uid,
           name: credential.user!.displayName ?? 'Usuario',
           email: credential.user!.email ?? email,
           position: 'Empleado',
-          age: 30, // Valor por defecto, luego se puede obtener de Firestore
+          age: 30,
         );
       }
 
       return null;
     } on FirebaseAuthException catch (e) {
-      // Manejar errores específicos de Firebase
       throw _handleAuthException(e);
     } catch (e) {
       throw 'Error inesperado: $e';
     }
   }
 
-  /// Registro de nuevo usuario
   Future<UserModel?> register(String email, String password, String name) async {
     try {
-      // Crear usuario en Firebase
       final UserCredential credential = await _auth.createUserWithEmailAndPassword(
         email: email,
         password: password,
       );
 
-      // Actualizar el nombre del usuario
       if (credential.user != null) {
         await credential.user!.updateDisplayName(name);
-        
+
         return UserModel(
           id: credential.user!.uid,
           name: name,
           email: email,
           position: 'Empleado',
-          age: 30, // Valor por defecto
+          age: 30,
         );
       }
 
@@ -72,7 +59,6 @@ class AuthService {
     }
   }
 
-  /// Logout
   Future<void> logout() async {
     try {
       await _auth.signOut();
@@ -81,28 +67,26 @@ class AuthService {
     }
   }
 
-  /// Verificar si hay sesión activa
   Future<UserModel?> checkCurrentUser() async {
     try {
-      final user = _auth.currentUser;
-      
+      final user = await _auth.authStateChanges().first;
+
       if (user != null) {
         return UserModel(
           id: user.uid,
           name: user.displayName ?? 'Usuario',
           email: user.email ?? '',
           position: 'Empleado',
-          age: 30, // Valor por defecto
+          age: 30,
         );
       }
-      
+
       return null;
     } catch (e) {
       return null;
     }
   }
 
-  /// Restablecer contraseña
   Future<void> resetPassword(String email) async {
     try {
       await _auth.sendPasswordResetEmail(email: email);
@@ -113,7 +97,6 @@ class AuthService {
     }
   }
 
-  /// Manejar excepciones de Firebase Auth
   String _handleAuthException(FirebaseAuthException e) {
     switch (e.code) {
       case 'user-not-found':

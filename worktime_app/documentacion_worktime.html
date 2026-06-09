@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>WorkTime – Documentación</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Segoe UI', Calibri, Arial, sans-serif;
+      font-size: 10.5pt;
+      color: #1a1a1a;
+      background: #f4f4f4;
+    }
+
+    .page {
+      width: 21cm;
+      min-height: 29.7cm;
+      background: white;
+      margin: 1cm auto;
+      padding: 2.2cm 2.5cm;
+      position: relative;
+    }
+
+    /* ── cabecera de página ── */
+    .page-header {
+      font-size: 8.5pt;
+      color: #888;
+      border-bottom: 1px solid #ccc;
+      padding-bottom: 4px;
+      margin-bottom: 28px;
+    }
+
+    .page-footer {
+      font-size: 8.5pt;
+      color: #888;
+      border-top: 1px solid #ccc;
+      padding-top: 4px;
+      margin-top: 28px;
+      text-align: center;
+    }
+
+    /* ── portada ── */
+    .cover {
+      text-align: center;
+      padding-top: 3cm;
+    }
+
+    .cover h1 {
+      font-size: 52pt;
+      font-weight: 800;
+      color: #2c3e50;
+      letter-spacing: -1px;
+      margin-bottom: 6px;
+    }
+
+    .cover .subtitle {
+      font-size: 16pt;
+      color: #7f8c8d;
+      font-weight: 300;
+      margin-bottom: 60px;
+    }
+
+    .cover table {
+      margin: 0 auto;
+      border-collapse: collapse;
+      width: 80%;
+    }
+
+    .cover table td {
+      padding: 9px 16px;
+      border: 1px solid #ddd;
+      font-size: 10pt;
+    }
+
+    .cover table td:first-child {
+      background: #2c3e50;
+      color: white;
+      font-weight: 600;
+      width: 35%;
+    }
+
+    /* ── títulos ── */
+    h2 {
+      font-size: 17pt;
+      color: #2c3e50;
+      margin-top: 32px;
+      margin-bottom: 10px;
+      padding-bottom: 5px;
+      border-bottom: 2px solid #2c3e50;
+    }
+
+    h3 {
+      font-size: 11pt;
+      font-weight: 700;
+      color: #2c3e50;
+      margin-top: 18px;
+      margin-bottom: 6px;
+    }
+
+    /* ── texto ── */
+    p {
+      line-height: 1.6;
+      margin-bottom: 10px;
+    }
+
+    ul, ol {
+      margin: 8px 0 12px 24px;
+      line-height: 1.7;
+    }
+
+    li {
+      margin-bottom: 3px;
+    }
+
+    /* ── tablas ── */
+    table.data {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 12px 0 18px 0;
+      font-size: 9.5pt;
+    }
+
+    table.data th {
+      background: #2c3e50;
+      color: white;
+      padding: 7px 12px;
+      text-align: left;
+      font-weight: 600;
+    }
+
+    table.data td {
+      padding: 7px 12px;
+      border: 1px solid #ddd;
+    }
+
+    table.data tr:nth-child(even) td {
+      background: #f8f8f8;
+    }
+
+    /* ── código ── */
+    .code-block {
+      background: #f0f0f0;
+      border-left: 3px solid #2c3e50;
+      padding: 10px 14px;
+      font-family: 'Consolas', 'Courier New', monospace;
+      font-size: 8.5pt;
+      margin: 10px 0 16px 0;
+      white-space: pre;
+      line-height: 1.5;
+    }
+
+    /* ── nota ── */
+    .note {
+      background: #fef9e7;
+      border-left: 3px solid #f39c12;
+      padding: 8px 14px;
+      margin: 12px 0;
+      font-size: 9.5pt;
+      font-style: italic;
+      color: #555;
+    }
+
+    /* ── índice ── */
+    .index-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+
+    .index-list li {
+      padding: 5px 0;
+      border-bottom: 1px dotted #ccc;
+      font-size: 10.5pt;
+    }
+
+    .index-list li span {
+      color: #888;
+      float: right;
+    }
+
+    @media print {
+      body { background: white; }
+      .page { margin: 0; box-shadow: none; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════
+     PORTADA
+══════════════════════════════════════════════ -->
+<div class="page">
+  <div class="cover">
+    <h1>WorkTime</h1>
+    <div class="subtitle">Documentación de la aplicación</div>
+
+    <table>
+      <tr><td>Documento</td><td>Documentación técnica y de usuario</td></tr>
+      <tr><td>Aplicación</td><td>WorkTime</td></tr>
+      <tr><td>Plataforma</td><td>Android (Flutter)</td></tr>
+      <tr><td>Autor</td><td>David Rollan Arias</td></tr>
+      <tr><td>Email</td><td>androide.dra@gmail.com</td></tr>
+      <tr><td>Curso</td><td>DAM 2025/2026</td></tr>
+      <tr><td>Versión</td><td>1.4.2 Alpha</td></tr>
+      <tr><td>Lenguaje</td><td>Dart / Flutter</td></tr>
+      <tr><td>Backend</td><td>Firebase (Auth + Firestore)</td></tr>
+    </table>
+  </div>
+
+  <div class="page-footer">Página</div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════
+     ÍNDICE
+══════════════════════════════════════════════ -->
+<div class="page">
+  <div class="page-header">WorkTime | Documentación DAM 2025/2026</div>
+
+  <h2>Índice</h2>
+
+  <ul class="index-list">
+    <li>1. Descripción de la aplicación <span>3</span></li>
+    <li>2. Objetivos <span>3</span></li>
+    <li>3. Tecnologías y dependencias <span>4</span></li>
+    <li>4. Estructura del proyecto <span>5</span></li>
+    <li>5. Pantallas y funcionamiento <span>6</span></li>
+    <li>&nbsp;&nbsp;&nbsp;5.1 Splash Screen <span>6</span></li>
+    <li>&nbsp;&nbsp;&nbsp;5.2 Login y Registro <span>6</span></li>
+    <li>&nbsp;&nbsp;&nbsp;5.3 Pantalla principal (Home) <span>7</span></li>
+    <li>&nbsp;&nbsp;&nbsp;5.4 Historial de actividades <span>8</span></li>
+    <li>&nbsp;&nbsp;&nbsp;5.5 Resumen mensual <span>8</span></li>
+    <li>&nbsp;&nbsp;&nbsp;5.6 Perfil de usuario <span>9</span></li>
+    <li>6. Configuración de Firebase <span>10</span></li>
+    <li>7. Problemas encontrados y soluciones <span>11</span></li>
+    <li>8. Posibles mejoras <span>12</span></li>
+  </ul>
+
+  <div class="page-footer">Página</div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════
+     1. DESCRIPCIÓN
+══════════════════════════════════════════════ -->
+<div class="page">
+  <div class="page-header">WorkTime | Documentación DAM 2025/2026</div>
+
+  <h2>1. Descripción de la aplicación</h2>
+
+  <p>WorkTime es una aplicación de control de jornada laboral desarrollada en Flutter para Android. La idea es simple: que el empleado pueda fichar su entrada y salida desde el móvil, ver el tiempo que lleva trabajando ese día en tiempo real, y consultar un resumen de horas al final del mes.</p>
+
+  <p>Los datos se guardan en la nube con Firebase, así que se puede usar desde cualquier dispositivo. Cada usuario tiene su propia cuenta y solo puede ver sus propios fichajes.</p>
+
+  <p>La versión actual es una alpha funcional. Tiene todas las funciones principales implementadas pero todavía le faltan cosas que se irán añadiendo.</p>
+
+
+  <h2>2. Objetivos</h2>
+
+  <h3>Funcionales</h3>
+  <ul>
+    <li>Fichar entrada y salida con un botón desde la pantalla principal</li>
+    <li>Contador de tiempo trabajado visible en tiempo real</li>
+    <li>Pausas en la sesión, con la posibilidad de reanudarla</li>
+    <li>Historial de actividades filtrable por tipo</li>
+    <li>Resumen mensual con calendario, horas trabajadas y horas esperadas</li>
+    <li>Sesión persistente — no hay que iniciar sesión cada vez que se abre la app</li>
+    <li>Registro y login de usuarios con email y contraseña</li>
+    <li>Perfil editable con datos personales</li>
+  </ul>
+
+  <h3>Técnicos</h3>
+  <ul>
+    <li>Separación entre pantallas, estado y servicios de datos</li>
+    <li>Estado gestionado con Provider</li>
+    <li>Navegación con GoRouter</li>
+    <li>Reglas de seguridad en Firestore que aíslan los datos de cada usuario</li>
+    <li>Persistencia de sesión activa para que el contador sobreviva al reinicio de la app</li>
+  </ul>
+
+  <div class="page-footer">Página</div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════
+     3. TECNOLOGÍAS
+══════════════════════════════════════════════ -->
+<div class="page">
+  <div class="page-header">WorkTime | Documentación DAM 2025/2026</div>
+
+  <h2>3. Tecnologías y dependencias</h2>
+
+  <p>La app está escrita completamente en Dart con el framework Flutter. El objetivo es Android, aunque Flutter podría compilarla también para iOS o web con pocos cambios.</p>
+
+  <table class="data">
+    <tr>
+      <th>Paquete</th>
+      <th>Versión</th>
+      <th>Para qué se usa</th>
+    </tr>
+    <tr><td>flutter (SDK)</td><td>—</td><td>Framework base</td></tr>
+    <tr><td>firebase_core</td><td>^4.5.0</td><td>Inicialización de Firebase</td></tr>
+    <tr><td>firebase_auth</td><td>^6.2.0</td><td>Login y registro de usuarios</td></tr>
+    <tr><td>cloud_firestore</td><td>^6.1.3</td><td>Base de datos en la nube</td></tr>
+    <tr><td>provider</td><td>^6.1.2</td><td>Gestión de estado</td></tr>
+    <tr><td>go_router</td><td>^14.6.2</td><td>Navegación entre pantallas</td></tr>
+    <tr><td>shared_preferences</td><td>^2.3.2</td><td>Guardar preferencia "Recuérdame"</td></tr>
+    <tr><td>flutter_localizations</td><td>SDK</td><td>Calendario en español</td></tr>
+    <tr><td>intl</td><td>^0.20.2</td><td>Formato de fechas</td></tr>
+  </table>
+
+  <h3>Por qué Provider y no otro sistema de estado</h3>
+  <p>Provider es el que más se ajusta al nivel del proyecto. GetX o Bloc añaden complejidad que no hace falta aquí. Con Provider hay un ChangeNotifier por cada área (autenticación, actividades, sesión, resumen) y las pantallas se suscriben solo a lo que necesitan.</p>
+
+  <h3>Por qué GoRouter</h3>
+  <p>La navegación de Flutter por defecto con Navigator.push funciona, pero cuando tienes varias rutas con lógica de redirección (por ejemplo, mandar al login si no estás autenticado) se complica rápido. GoRouter permite declarar todas las rutas en un sitio y añadir lógica de redirección de forma limpia.</p>
+
+  <div class="page-footer">Página</div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════
+     4. ESTRUCTURA
+══════════════════════════════════════════════ -->
+<div class="page">
+  <div class="page-header">WorkTime | Documentación DAM 2025/2026</div>
+
+  <h2>4. Estructura del proyecto</h2>
+
+  <div class="code-block">lib/
+├── main.dart
+├── firebase_options.dart
+│
+├── core/
+│   ├── routes/
+│   │   └── app_routes.dart          ← definición de todas las rutas
+│   └── theme/
+│       └── app_theme.dart           ← tema visual de la app
+│
+├── models/
+│   ├── activity_model.dart          ← modelo de fichaje
+│   ├── user_model.dart              ← modelo de usuario
+│   └── summary_model.dart           ← modelo del resumen mensual
+│
+├── services/
+│   ├── auth_service.dart            ← login, registro, logout
+│   └── firestore_service.dart       ← lectura y escritura en Firestore
+│
+├── state/
+│   ├── auth_provider.dart           ← estado de autenticación
+│   ├── activity_provider.dart       ← estado de los fichajes
+│   ├── session_provider.dart        ← estado del contador de tiempo
+│   └── summary_provider.dart        ← estado del resumen mensual
+│
+└── presentation/
+    ├── screens/
+    │   ├── splash/
+    │   ├── login/
+    │   ├── register/
+    │   ├── home/
+    │   ├── activity/
+    │   ├── summary/
+    │   └── profile/
+    └── widgets/
+        ├── app_bottom_nav_bar.dart
+        ├── clock_in_button.dart
+        └── add_activity_dialog.dart</div>
+
+  <p>La separación en capas es sencilla: las pantallas solo hablan con los providers, los providers usan los servicios, y los servicios hablan directamente con Firebase. Ninguna pantalla llama a Firestore directamente.</p>
+
+  <div class="page-footer">Página</div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════
+     5. PANTALLAS
+══════════════════════════════════════════════ -->
+<div class="page">
+  <div class="page-header">WorkTime | Documentación DAM 2025/2026</div>
+
+  <h2>5. Pantallas y funcionamiento</h2>
+
+  <h3>5.1 Splash Screen</h3>
+  <p>Es la primera pantalla que aparece. Muestra el logo de la app durante 2 segundos mientras comprueba si ya hay sesión activa. Si la hay, va directamente al home; si no, al login.</p>
+  <p>Aquí hubo un problema importante: si Firebase aún no había terminado de cargar el perfil del usuario desde Firestore cuando la splash terminaba, machacaba los datos del usuario con un perfil vacío. La solución fue hacer que la splash espere a que AuthProvider termine de cargar antes de redirigir.</p>
+
+  <h3>5.2 Login y Registro</h3>
+  <p>El login tiene los campos de email y contraseña, validación en el cliente (formato de email, longitud mínima de contraseña) y un checkbox de "Recuérdame". Si está marcado, la próxima vez que se abra la app se entra directamente sin iniciar sesión. Si está desmarcado, se cierra la sesión automáticamente al arrancar la app aunque Firebase la tenga guardada.</p>
+  <p>El registro pide nombre, email, contraseña y confirmación de contraseña. Al registrarse se crea la cuenta en Firebase Auth y se guarda el perfil básico en Firestore.</p>
+
+  <div class="note">La sesión persiste por defecto. Para cerrarla hay que pulsar "Cerrar Sesión" en el perfil, o desmarcar "Recuérdame" antes de cerrar la app.</div>
+
+  <table class="data">
+    <tr><th>Error</th><th>Causa</th></tr>
+    <tr><td>No existe una cuenta con este email</td><td>El email no está registrado</td></tr>
+    <tr><td>Contraseña incorrecta</td><td>La contraseña no corresponde</td></tr>
+    <tr><td>Este email ya está registrado</td><td>Intentar registrar un email existente</td></tr>
+    <tr><td>Las contraseñas no coinciden</td><td>Validación local en el formulario</td></tr>
+  </table>
+
+  <div class="page-footer">Página</div>
+</div>
+
+<div class="page">
+  <div class="page-header">WorkTime | Documentación DAM 2025/2026</div>
+
+  <h3>5.3 Pantalla principal (Home)</h3>
+  <p>Es la pantalla central de la app. Tiene tres partes:</p>
+
+  <ul>
+    <li><strong>Saludo y fecha</strong> — muestra el nombre del usuario y el día actual</li>
+    <li><strong>Card de fichaje</strong> — el bloque principal con el estado actual, el contador de tiempo y los botones de acción</li>
+    <li><strong>Resumen del día</strong> — cuántas actividades hay registradas hoy y las últimas tres</li>
+  </ul>
+
+  <p>El botón principal cambia según el estado en el que esté el usuario:</p>
+
+  <table class="data">
+    <tr><th>Estado</th><th>Botón principal</th><th>Botón secundario</th></tr>
+    <tr><td>Sin fichar</td><td>Fichar Entrada (verde)</td><td>—</td></tr>
+    <tr><td>Trabajando</td><td>Fichar Salida (rojo)</td><td>Iniciar Pausa (amarillo)</td></tr>
+    <tr><td>En pausa</td><td>Finalizar Pausa (azul)</td><td>—</td></tr>
+    <tr><td>Salida fichada</td><td>Fichar Entrada (verde)</td><td>—</td></tr>
+  </table>
+
+  <p>Cuando el usuario está trabajando, aparece un contador en formato HH:MM:SS que se actualiza cada segundo. Este contador se guarda en Firestore, así que si se cierra la app y se vuelve a abrir, el contador retoma desde donde estaba.</p>
+
+  <p>También hay un botón "Ver Historial Completo" que lleva a la pantalla de actividades, y un botón "Añadir" para registrar actividades manualmente con fecha y hora personalizadas.</p>
+
+
+  <h3>5.4 Historial de actividades</h3>
+  <p>Lista todas las actividades del usuario ordenadas por fecha, de más reciente a más antigua. Se puede filtrar por tipo de actividad usando el icono del embudo en la barra superior.</p>
+
+  <p>Las actividades que son de hoy aparecen con una etiqueta "HOY" en la esquina de la tarjeta. Cada tarjeta muestra el tipo de actividad, la descripción, la hora y, si tiene, la ubicación.</p>
+
+  <p>El botón flotante (+) abre un diálogo para añadir una actividad manualmente. Se puede elegir el tipo, la fecha (con selector de calendario en español), la hora, una descripción, ubicación y notas opcionales.</p>
+
+  <div class="page-footer">Página</div>
+</div>
+
+<div class="page">
+  <div class="page-header">WorkTime | Documentación DAM 2025/2026</div>
+
+  <h3>5.5 Resumen mensual</h3>
+  <p>Muestra las estadísticas del mes seleccionado. Por defecto carga el mes actual y se puede navegar hacia atrás y hacia adelante con las flechas.</p>
+
+  <p>Hay cuatro tarjetas en la parte superior con los datos principales:</p>
+  <ul>
+    <li><strong>Trabajadas</strong> — total de horas registradas ese mes</li>
+    <li><strong>Esperadas</strong> — horas que debería haber trabajado (8h por día laborable)</li>
+    <li><strong>Progreso</strong> — porcentaje de cumplimiento</li>
+    <li><strong>Extra / Pendientes</strong> — horas que sobran o faltan respecto al objetivo</li>
+  </ul>
+
+  <p>Debajo hay una barra de progreso y luego el calendario del mes, donde cada día aparece coloreado según su estado:</p>
+
+  <table class="data">
+    <tr><th>Color</th><th>Significado</th></tr>
+    <tr><td>Verde</td><td>Día completo (8h o más)</td></tr>
+    <tr><td>Naranja</td><td>Día incompleto (menos de 8h)</td></tr>
+    <tr><td>Gris</td><td>Sin datos</td></tr>
+  </table>
+
+  <p>Los datos del resumen se calculan en tiempo real a partir del historial de sesiones guardado en Firestore. No hay un documento de "resumen" precalculado, se calcula cada vez que se abre la pantalla.</p>
+
+
+  <h3>5.6 Perfil de usuario</h3>
+  <p>Muestra todos los datos del usuario en una card con filas de icono + etiqueta + valor. Los campos que aparecen son nombre, email, cargo, departamento, teléfono y fecha de inicio en la empresa. Los campos opcionales (departamento, teléfono, fecha de inicio) solo aparecen si tienen valor.</p>
+
+  <p>Desde el icono del lápiz en la barra superior se abre la pantalla de edición de perfil, donde se pueden modificar el nombre, cargo, departamento y teléfono. El email no se puede cambiar porque es el identificador de la cuenta de Firebase. Los cambios se guardan en Firestore.</p>
+
+  <p>Al final de la pantalla hay las opciones de "Créditos", "Acerca de" y el botón de "Cerrar Sesión" que pide confirmación antes de cerrar.</p>
+
+  <div class="page-footer">Página</div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════
+     6. FIREBASE
+══════════════════════════════════════════════ -->
+<div class="page">
+  <div class="page-header">WorkTime | Documentación DAM 2025/2026</div>
+
+  <h2>6. Configuración de Firebase</h2>
+
+  <h3>Servicios usados</h3>
+  <ul>
+    <li><strong>Firebase Authentication</strong> — login y registro con email y contraseña</li>
+    <li><strong>Cloud Firestore</strong> — almacenamiento de perfiles, actividades y sesiones</li>
+  </ul>
+
+  <div class="note">Firebase Storage (para fotos de perfil) se descartó porque aunque tiene capa gratuita, Google obliga a dar datos de pago para activarlo. Se eliminó la funcionalidad de foto de perfil para evitar esa dependencia.</div>
+
+  <h3>Estructura de datos en Firestore</h3>
+
+  <div class="code-block">users/
+  {uid}/
+    profile/
+      data              ← documento con todos los datos del usuario
+                           (name, email, position, department, phone, startDate...)
+    activities/
+      {activityId}      ← cada fichaje (type, timestamp, description, location...)
+    sessions/
+      active            ← sesión en curso (startTime, isPaused, elapsedSeconds...)
+      {sessionId}       ← sesiones terminadas (startTime, endTime, durationSeconds)</div>
+
+  <h3>Reglas de seguridad</h3>
+  <p>Las reglas garantizan que cada usuario solo puede acceder a sus propios documentos. Un usuario autenticado no puede leer ni escribir los datos de otro.</p>
+
+  <div class="code-block">rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /users/{userId} {
+      allow read, write: if request.auth != null
+                         && request.auth.uid == userId;
+
+      match /profile/{document=**} {
+        allow read, write: if request.auth != null
+                           && request.auth.uid == userId;
+      }
+
+      match /activities/{activityId} {
+        allow read, write, delete: if request.auth != null
+                                   && request.auth.uid == userId;
+      }
+
+      match /sessions/{sessionId} {
+        allow read, write, delete: if request.auth != null
+                                   && request.auth.uid == userId;
+      }
+    }
+  }
+}</div>
+
+  <h3>Índices</h3>
+  <p>Se creó un índice compuesto en la colección <em>sessions</em> para la consulta que filtra por <em>isActive = false</em> ordenando por <em>startTime</em> descendente. Sin ese índice Firestore rechaza la consulta.</p>
+
+  <div class="page-footer">Página</div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════
+     7. PROBLEMAS
+══════════════════════════════════════════════ -->
+<div class="page">
+  <div class="page-header">WorkTime | Documentación DAM 2025/2026</div>
+
+  <h2>7. Problemas encontrados y soluciones</h2>
+
+  <table class="data">
+    <tr>
+      <th>Problema</th>
+      <th>Causa</th>
+      <th>Solución</th>
+    </tr>
+    <tr>
+      <td>El perfil del usuario se vaciaba al iniciar la app</td>
+      <td>La splash screen llamaba a Firebase Auth antes de que AuthProvider terminara de cargar el perfil desde Firestore, machacando los datos</td>
+      <td>Hacer que la splash espere a que <em>isLoading</em> del AuthProvider sea false antes de redirigir</td>
+    </tr>
+    <tr>
+      <td>El contador se reiniciaba si se cerraba la app</td>
+      <td>El timer solo existía en memoria</td>
+      <td>Guardar <em>startTime</em>, <em>isPaused</em> y <em>elapsedSeconds</em> en el documento <em>sessions/active</em> de Firestore, y restaurarlos al arrancar</td>
+    </tr>
+    <tr>
+      <td>El selector de fecha petaba al abrirlo</td>
+      <td>El diálogo usaba <em>locale: Locale('es', 'ES')</em> pero la app no tenía <em>flutter_localizations</em> configurado</td>
+      <td>Añadir <em>flutter_localizations</em> al pubspec y los delegates de localización al MaterialApp</td>
+    </tr>
+    <tr>
+      <td>La última fila del calendario estaba desalineada</td>
+      <td>Los meses que no empiezan en lunes dejaban la última fila con menos de 7 días, y al usar <em>spaceAround</em> los espacios cambiaban</td>
+      <td>Rellenar la fila con SizedBox vacíos hasta llegar a 7 elementos</td>
+    </tr>
+    <tr>
+      <td>Firebase Storage requería datos de pago</td>
+      <td>Google exige vincular una tarjeta incluso en el plan gratuito</td>
+      <td>Eliminar la funcionalidad de foto de perfil por completo</td>
+    </tr>
+    <tr>
+      <td>El usuario tenía que iniciar sesión siempre</td>
+      <td><em>_auth.currentUser</em> devuelve null si se llama antes de que Firebase restaure la sesión persistida</td>
+      <td>Cambiar a <em>authStateChanges().first</em> que espera al primer evento del stream, garantizando que Firebase ha cargado el estado antes de responder</td>
+    </tr>
+    <tr>
+      <td>Build de Android fallaba (error AGP)</td>
+      <td>El Android Gradle Plugin estaba en la versión 8.1.0 y Flutter requiere 8.1.1 como mínimo</td>
+      <td>Actualizar AGP a 8.7.3 y Kotlin a 1.9.25 en <em>settings.gradle</em></td>
+    </tr>
+    <tr>
+      <td>Gradle no compilaba (metadata.bin)</td>
+      <td>Caché de Gradle corrompida en <em>~/.gradle/caches/8.14/transforms</em></td>
+      <td>Borrar la carpeta de caché y volver a compilar</td>
+    </tr>
+  </table>
+
+  <div class="page-footer">Página</div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════
+     8. MEJORAS
+══════════════════════════════════════════════ -->
+<div class="page">
+  <div class="page-header">WorkTime | Documentación DAM 2025/2026</div>
+
+  <h2>8. Posibles mejoras</h2>
+
+  <p>Estas son las cosas que me gustaría añadir o mejorar en versiones futuras:</p>
+
+  <h3>Foto de perfil</h3>
+  <p>Se implementó y luego se quitó porque Firebase Storage requiere datos de pago. Una alternativa sería guardar la imagen como base64 en Firestore (sin Storage), aunque con imágenes pequeñas para no pasarse del límite de 1MB por documento.</p>
+
+  <h3>Notificaciones</h3>
+  <p>Recordatorio si llegas a la oficina y no has fichado, o aviso si llevas más de X horas trabajando sin pausa. Se podría hacer con <em>flutter_local_notifications</em>.</p>
+
+  <h3>Exportar datos</h3>
+  <p>Poder generar un PDF o CSV con el resumen del mes para entregarlo a recursos humanos o para llevarlo en el móvil.</p>
+
+  <h3>Solicitud de ausencias</h3>
+  <p>Un formulario para pedir días libres o vacaciones, con estados (pendiente, aprobada, denegada). Requeriría un rol de administrador que no existe actualmente.</p>
+
+  <h3>Geolocalización</h3>
+  <p>Fichar automáticamente cuando el usuario llega o sale de un punto GPS concreto (la oficina). Flutter tiene el paquete <em>geolocator</em> para esto.</p>
+
+  <h3>Modo administrador</h3>
+  <p>Una cuenta de admin que pueda ver los fichajes de todos los empleados, gestionar el equipo y aprobar ausencias. Esto cambiaría bastante la arquitectura de Firestore.</p>
+
+  <h3>Widget para la pantalla de inicio de Android</h3>
+  <p>Un widget que muestre el contador de tiempo directamente en el escritorio del móvil, sin tener que abrir la app. Técnicamente es posible con Flutter pero complejo de implementar.</p>
+
+  <div class="note">La app funciona correctamente para uso individual en su estado actual. Las mejoras listadas ampliarían su utilidad en un entorno empresarial real.</div>
+
+  <div class="page-footer">Página</div>
+</div>
+
+</body>
+</html>
